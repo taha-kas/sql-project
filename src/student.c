@@ -20,7 +20,39 @@ Student_List* CreateList(){
     return temp; 
 }
 
-Student* CreateNode(char* first_name, char* last_name, char* dob, char* status){
+Student* CreateNode(){
+
+    //Get First Name:
+    printf("Enter First Name: ");
+    char first_name[50];
+    fgets(first_name, sizeof(first_name), stdin); 
+    first_name[strcspn(first_name, "\n")] = '\0'; 
+
+    //Get Last Name:
+    printf("Enter Last Name: ");
+    char last_name[50];
+    fgets(last_name, sizeof(last_name), stdin); 
+    last_name[strcspn(last_name, "\n")] = '\0'; 
+
+    //Get Date of Birth:
+    printf("Enter Date of Birth (YYYY-MM-DD): "); 
+    char dob[12];
+    fgets(dob, sizeof(dob), stdin);
+    dob[strcspn(dob, "\n")] = '\0';
+
+    //Get Status:
+    printf("Enter Status (pending/active/graduated/dropped): ");
+    char status[20]; 
+    fgets(status, sizeof(status), stdin); 
+    status[strcspn(status, "\n")] = '\0'; 
+
+    //Check for valid status:
+    while(strcmp(status, "pending") != 0 && strcmp(status, "active") != 0 && strcmp(status, "graduated") != 0 && strcmp(status, "dropped") != 0){
+        printf("Invalid status. Please enter one of the following: pending, active, graduated, dropped\n");
+        fgets(status, sizeof(status), stdin);
+        status[strcspn(status, "\n")] = '\0'; 
+    }
+
     Student* temp = malloc(sizeof(Student)); 
 
     if(temp == NULL){
@@ -38,8 +70,8 @@ Student* CreateNode(char* first_name, char* last_name, char* dob, char* status){
 
     return temp;
 }
-//  To correct tomorrow: Insertion from the end instead of the beginning
-int Insert_student(Student_List* list, Student* student) {
+
+int Insert_student_list(Student_List* list, Student* student) {
 
     if(list == NULL || student == NULL) {
         printf("Error: List or student is NULL\n");
@@ -63,11 +95,13 @@ int Insert_student(Student_List* list, Student* student) {
 
 
 void Save_student(sqlite3 *db, Student_List* list, Student* student){
+
     if(!db_insert_student(db, student)){
         printf("Error: Could not insert student into database\n");
         return; 
     }
-    Insert_student(list, student);
+    
+    Insert_student_list(list, student);
 }
 
 void printList(Student_List* list){
@@ -217,31 +251,53 @@ void freeList(Student_List* list){
 }
 
 int main(){
+
+    printf("Enter the password: ");
+    char password[50]; 
+    fgets(password, sizeof(password), stdin); 
+    password[strcspn(password, "\n")] = '\0';
+
+    if(strcmp(password, "admin123") != 0){
+        printf("Error: Incorrect password\n");
+        return 1; 
+    }
+
+    printf("Password accepted. Access granted.\n");
+
     sqlite3 *test;
     char *err_msg = 0;
 
     db_connect(&test, "test.db");
 
     // Create a table
-    db_create_table(test); 
+    CreateStudentTable(test); 
 
     // Query and display the data
     Student_List* list = CreateList();
-    Save_student(test, list, CreateNode("John", "Doe", "2000-01-01", "active"));
-    Save_student(test, list, CreateNode("Jane", "Smith", "1999-05-15", "pending"));   
-    Save_student(test, list, CreateNode("Alice", "Johnson", "2001-09-23", "pending"));
-    Save_student(test, list, CreateNode("Bob", "Brown", "1998-12-30", "pending"));
-    Save_student(test, list, CreateNode("Charlie", "Davis", "2002-07-11", "pending"));
-    Save_student(test, list, CreateNode("Eve", "Wilson", "2000-03-05", "pending"));
+    
+    // printf("How many students do you want to add: ");
+    // int num; 
+    // scanf("%d", &num);
+    // getchar();
 
-    // removeStudent(test, list, 4);
+    // for(int i = 0; i < num; i++){
+    //     Student* new_student = CreateNode();
+    //     if(new_student != NULL){
+    //         Save_student(test, list, new_student);
+    //     } else {
+    //         printf("Failed to create student. Skipping...\n");
+    //     }
+    // }
 
-    // updateStudent(test, list, 2);
+    load_students(test, list);
 
-    // printList(list);
+    // removeStudent(test, list, 7);
+
+    updateStudent(test, list, 9);
 
     // load_students(test, list);
-    // Save_student(test, list, CreateNode("Diana", "Prince", "1995-04-25", "active"));
+
+
     // removeStudent(test, list, 8);
 
     printList(list);
