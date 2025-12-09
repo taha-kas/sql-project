@@ -6,41 +6,30 @@
 
 
 Course* createCourse(){
-
-    //Get Course ID:
-    printf("Enter Course ID: ");
-    char course_id[10];
-    fgets(course_id, sizeof(course_id), stdin); 
-    course_id[strcspn(course_id, "\n")] = '\0';
-
-    //Get Course Name:
-    printf("Enter Course Name: ");
-    char course_name[50];
-    fgets(course_name, sizeof(course_name), stdin); 
-    course_name[strcspn(course_name, "\n")] = '\0';
-
-    //Get Professor Name:
-    printf("Enter Professor Name: ");
-    char professor[50];
-    fgets(professor, sizeof(professor), stdin);
-    professor[strcspn(professor, "\n")] = '\0';
-
-    //Get Semester:
-    printf("Enter Semester (e.g., Fall, Spring): ");
-    char semester[5];
-    fgets(semester, sizeof(semester), stdin);
-    semester[strcspn(semester, "\n")] = '\0';
-
     Course* new_course = malloc(sizeof(Course));
+
     if(new_course == NULL){
         printf("Error: Could not allocate memory for new course.\n");
         return NULL;
     }
 
-    strncpy(new_course->course_id, course_id, sizeof(new_course->course_id) - 1);
-    strncpy(new_course->course_name, course_name, sizeof(new_course->course_name) - 1);
-    strncpy(new_course->professor, professor, sizeof(new_course->professor) - 1);
+    //Get Course ID:
+    printf("Enter Course ID: ");
+    fgets(new_course->course_id, sizeof(new_course->course_id), stdin); 
+    new_course->course_id[strcspn(new_course->course_id, "\n")] = '\0';
+
+    //Get Course Name:
+    printf("Enter Course Name: ");
+    fgets(new_course->course_name, sizeof(new_course->course_name), stdin); 
+    new_course->course_name[strcspn(new_course->course_name, "\n")] = '\0';
+
+    //Get Professor Name:
+    printf("Enter Professor Name: ");
+    fgets(new_course->professor, sizeof(new_course->professor), stdin);
+    new_course->professor[strcspn(new_course->professor, "\n")] = '\0';
+    
     new_course->next = NULL;
+
 
     return new_course;
 }
@@ -67,17 +56,23 @@ int Insert_course_list(Course_List* list, Course* course) {
     return 1;
 }
 
-void SaveCourse(sqlite3 *db, Course_List* list, Course* course){
+int SaveCourse(sqlite3 *db, Course_List* list, Course* course){
 
     if(!db_insert_course(db, course)){
         printf("Error: Could not insert course into database\n");
-        return; 
+        return 0; 
     }
 
-    Insert_course_list(list, course);
+    if(!Insert_course_list(list, course)){
+        printf("Error: Could not insert course into list\n");
+        db_remove_course(db, course->course_id);
+        return 0;
+    }
+    return 1;
 }
 
-void add_course_to_major(Major* major, Course* course){
+//Might need to pass db connection later
+void add_course_to_major(sqlite3 *db, Major* major, Course* course){
     if(major -> courses == NULL){
         major -> courses = course; 
         return; 
@@ -96,13 +91,15 @@ void print_courses_in_major(Major* major){
     printf("________________________________________________________________\n");
     printf("Courses in Major %s:\n", major -> major_name);
     printf("________________________________________________________________\n");
+    printf("%-15s%-30s%-20s\n", "Course ID", "Course Name", "Professor");
+    printf("________________________________________________________________\n");
     while(temp != NULL){
-        printf("Course ID: %-15s, Course Name: %-30s, Professor: %-20s\n", temp -> course_id, temp -> course_name, temp -> professor);
+        printf("%-15s%-30s%-20s\n", temp -> course_id, temp -> course_name, temp -> professor);
         temp = temp -> next; 
     }
 }
 
-void updateCourse(Course_List* list, char* course_id){
+int updateCourse(sqlite3 *db, Course_List* list, char* course_id){
     Course* temp = list -> head; 
 
     while(temp != NULL && strcmp(temp -> course_id, course_id) != 0){
@@ -111,7 +108,7 @@ void updateCourse(Course_List* list, char* course_id){
 
     if(temp == NULL){
         printf("Course with ID %s not found.\n", course_id);
-        return; 
+        return 0; 
     }
 
     printf("Current details:\n");
@@ -119,61 +116,101 @@ void updateCourse(Course_List* list, char* course_id){
     printf("Course Name: %s\n", temp -> course_name);
     printf("Professor: %s\n", temp -> professor);
 
+    char c; 
+    while((c = getchar()) != '\n' && c != EOF); 
+
     printf("What fields do you want to update?\n");
 
     printf("1. Course Name (y/n)\n");
-    char choice;
-    scanf(" %c", &choice);
-    getchar();    
-    if(choice == 'y' || choice == 'Y'){
-        char new_course_name[50];
+    char choice[10];
+    fgets(choice, sizeof(choice), stdin); 
+    if(choice[0] == 'y' || choice[0] == 'Y'){
         printf("Enter new Course Name: ");
-        fgets(new_course_name, sizeof(new_course_name), stdin);
-        new_course_name[strcspn(new_course_name, "\n")] = 0;
-        strncpy(temp -> course_name, new_course_name, sizeof(temp -> course_name) - 1);
+        fgets(temp -> course_name, sizeof(temp -> course_name), stdin);
+        temp -> course_name[strcspn(temp -> course_name, "\n")] = 0;
     }
 
     printf("2. Professor (y/n)\n");
-    scanf(" %c", &choice);
-    getchar();    
-    if(choice == 'y' || choice == 'Y'){
-        char new_professor[50];
+    fgets(choice, sizeof(choice), stdin); 
+    if(choice[0] == 'y' || choice[0] == 'Y'){
         printf("Enter new Professor Name: ");
-        fgets(new_professor, sizeof(new_professor), stdin);
-        new_professor[strcspn(new_professor, "\n")] = 0;
-        strncpy(temp -> professor, new_professor, sizeof(temp -> professor) - 1);
+        fgets(temp -> professor, sizeof(temp -> professor), stdin);
+        temp -> professor[strcspn(temp -> professor, "\n")] = 0;
     }
 
-    printf("Course with ID %s updated successfully.\n", course_id);
+    if(!db_update_course(db, temp)){
+        printf("Error: Could not update course in database\n");
+        return 0; 
+    }
 
-    return;
+    printf("Course with ID %s has been updated successfully.\n", course_id);
+
+    return 1;
 
 }
 
+int removeCourse(sqlite3 *db, Course_List* list, char* course_id){
+    Course* temp = list -> head; 
+    Course* prev = NULL; 
 
+    while(temp != NULL && strcmp(course_id, temp -> course_id) != 0){
+        prev = temp; 
+        temp = temp -> next;
+    }
 
+    if(temp == NULL){
+        printf("Course with ID %s not found.\n", course_id);
+        return 0; 
+    }
 
+    if(prev == NULL){
+        list -> head = temp -> next;
+        free(temp);
+    }
 
+    else{
+        prev -> next = temp -> next; 
+        free(temp);
+    }
 
+    if(!db_remove_course(db, course_id)){
+        printf("Error: Could not remove course from database\n");
+        return 0; 
+    }
 
-void test(sqlite3* db, Student s){
-    sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(
-        db,
-        "UPDATE student SET first_name = ?, last_name = ?, date_of_birth = ?, status = ? WHERE id = ?",
-        -1,
-        &stmt,
-        NULL
-    );
-    
-    sqlite3_bind_text(stmt, 1, s.first_name, -1, SQLITE_TRANSIENT); 
-    sqlite3_bind_text(stmt, 2, s.last_name, -1,SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, s.date_of_birth, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, s.status, -1, SQLITE_TRANSIENT); 
-    sqlite3_bind_int(stmt, 5, s.id);
+    list -> num_of_courses--;
+    printf("Course with ID %s has been removed successfully.\n", course_id);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
-        printf("Update failed: %s\n", sqlite3_errmsg(db));
-    } 
-    sqlite3_finalize(stmt); 
+    return 1;
+}
+
+int printAllCourses(Course_List* list){
+    Course* temp = list -> head; 
+
+    if(temp == NULL){
+        printf("No courses available.\n");
+        return 0; 
+    }
+
+    printf("________________________________________________________________\n");
+    printf("All Courses:\n");
+    printf("________________________________________________________________\n");
+    printf("%-15s%-30s%-20s\n", "Course ID", "Course Name", "Professor");
+    printf("________________________________________________________________\n");
+    while(temp != NULL){
+        printf("%-15s%-30s%-20s\n", temp -> course_id, temp -> course_name, temp -> professor);
+        temp = temp -> next; 
+    }
+    return 1;
+}
+
+Course_List* CreateCourseList(){
+    Course_List* list = malloc(sizeof(Course_List));
+    if(list == NULL){
+        printf("Error: Could not allocate memory for course list.\n");
+        return NULL;
+    }
+    list -> head = NULL;
+    list -> num_of_courses = 0;
+    return list;
 }

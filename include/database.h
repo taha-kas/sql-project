@@ -2,9 +2,37 @@
 #define DATABASE_H
 #include "sqlite3.h"
 
+typedef struct Course{
+    char course_id[10]; //Utiliser des tableaux pour les identifiants fixes (uniques)
+    char course_name[50];
+    char professor[50];
+    struct Course* next;
+}Course;
+
+typedef struct{
+    Course* head;
+    int num_of_courses;
+}Course_List;
+
+typedef struct Major{
+    char major_id[10]; 
+    char major_name[50]; 
+    Course_List* courses;
+    int num_of_courses;
+    int capacity; 
+    int enrolled_students;
+    char head_professor[50];
+    struct Major* next;
+}Major; 
+
+typedef struct{
+    Major* head;
+    int num_of_majors;
+}Major_List;
+
 typedef struct Student{
     int id;
-    char* first_name;
+    char* first_name; //Utiliser des pointeurs au lieu de tableaux pour permettre la duplication de chaînes
     char* last_name; 
     char* date_of_birth;  
     char* status;         
@@ -17,50 +45,34 @@ typedef struct{
     int num_of_students; 
 }Student_List;
 
-typedef struct{
-    Course* head;
-    int num_of_courses;
-}Course_List;
-
-typedef struct Course{
-    char course_id[10]; 
-    char course_name[50];
-    char professor[50];
-    struct Course* next;
-}Course;
-
-typedef struct Major{
-    char major_id[10]; 
-    char major_name[50]; 
-    Course* courses;
-    int num_of_courses;
-    int capacity; 
-    int enrolled_students;
-    char head_professor[50];
-    struct Major* next;
-}Major; 
 
 
-/////////////////////////////////STUDENT DATABASE FUNCTIONS//////////////////////////////////////////
-int Insert_student_list(Student_List* list, Student* student); 
+
+/////////////////////////////////STUDENT FUNCTIONS//////////////////////////////////////////
 Student* CreateNode();
 Student_List* CreateList();
-void Save_student(sqlite3 *db, Student_List* list, Student* student);
-void removeStudent(sqlite3 *db, Student_List* list, int id);
-void updateStudent(sqlite3 *db, Student_List* list, int id);
+int Insert_student_list(Student_List* list, Student* student); 
+int Save_student(sqlite3 *db, Student_List* list, Student* student);
+int updateStudent(sqlite3 *db, Student_List* list, int id);
+int removeStudent(sqlite3 *db, Student_List* list, int id);
+void printStudent(Student_List* list, int id);
 void printList(Student_List* list);
 void freeList(Student_List* list);
-///////////////////////////////END OF STUDENT DATABASE FUNCTIONS/////////////////////////////////////
+///////////////////////////////END OF STUDENT FUNCTIONS/////////////////////////////////////
 
 
 
-////////////////////////////////COURSE DATABASE FUNCTIONS//////////////////////////////////////////
+////////////////////////////////COURSES FUNCTIONS//////////////////////////////////////////
 Course* createCourse();
+Course_List* CreateCourseList(); 
 int Insert_course_list(Course_List* list, Course* course);
-void SaveCourse(sqlite3 *db, Course_List* list, Course* course);
-void add_course_to_major(Major* major, Course* course);
+int SaveCourse(sqlite3 *db, Course_List* list, Course* course);
+void add_course_to_major(sqlite3 *db, Major* major, Course* course);
+int updateCourse(sqlite3 *db, Course_List* list, char* course_id);
+int removeCourse(sqlite3 *db, Course_List* list, char* course_id);
 void print_courses_in_major(Major* major);
-////////////////////////////////END OF COURSE DATABASE FUNCTIONS/////////////////////////////////////
+int printAllCourses(Course_List* list);
+////////////////////////////////END OF COURSES FUNCTIONS/////////////////////////////////////
 
 
 
@@ -70,11 +82,19 @@ int CreateStudentTable(sqlite3 *db);
 int db_insert_student(sqlite3 *db, Student* s);
 void db_remove_student(sqlite3 *db, int id);
 void load_students(sqlite3 *db, Student_List* list);
-void db_update_student(sqlite3 *db, Student s); 
+void db_update_student(sqlite3 *db, Student* s); 
 
 
 void CreateCourseTable(sqlite3* db);
-void db_insert_course(sqlite3* db, Course* c);
+int db_insert_course(sqlite3* db, Course* c);
+int db_remove_course(sqlite3 *db, const char* id);
+int db_update_course(sqlite3 *db, Course* c);
+void load_courses(sqlite3 *db, Course_List* list);
+
+
+void CreateMajorTable(sqlite3* db);
+int db_insert_major(sqlite3* db, Major* major);
+int db_remove_major(sqlite3 *db, const char* major_id);
 ////////////////////////////////END OF DATABASE OPERATION FUNCTIONS/////////////////////////////////////
 
 #endif // DATABASE_H

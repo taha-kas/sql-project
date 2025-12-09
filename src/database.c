@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include "sqlite3.h"
 #include "database.h"
 
@@ -39,14 +38,17 @@ return 1;
 int db_insert_student(sqlite3 *db, Student* s){
     sqlite3_stmt* stmt; 
 
-    sqlite3_prepare_v2(
+    if(sqlite3_prepare_v2(
         db,
         "INSERT INTO student(first_name, last_name, date_of_birth, status)"
         "VALUES (?,?,?,?)",
         -1,
         &stmt,
         NULL
-    );
+    ) != SQLITE_OK){
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
     
     sqlite3_bind_text(stmt, 1, s -> first_name, -1, SQLITE_TRANSIENT); 
     sqlite3_bind_text(stmt, 2, s -> last_name, -1,SQLITE_TRANSIENT);
@@ -100,13 +102,16 @@ void load_students(sqlite3 *db, Student_List* list){
 void db_remove_student(sqlite3 *db, int id){
     sqlite3_stmt* stmt; 
 
-    sqlite3_prepare_v2(
+    if(sqlite3_prepare_v2(
         db,
         "DELETE FROM student WHERE id = ?",
         -1,
         &stmt,
         NULL
-    );
+    ) != SQLITE_OK){
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return;
+    }
     
     sqlite3_bind_int(stmt, 1, id); 
 
@@ -116,23 +121,25 @@ void db_remove_student(sqlite3 *db, int id){
     sqlite3_finalize(stmt); 
 }
 
-void db_update_student(sqlite3 *db, Student s){
+void db_update_student(sqlite3 *db, Student* s){
     sqlite3_stmt* stmt; 
 
-    sqlite3_prepare_v2(
+    if(sqlite3_prepare_v2(
         db,
         "UPDATE student SET first_name = ?, last_name = ?, date_of_birth = ?, status = ? WHERE id = ?",
         -1,
         &stmt,
         NULL
-    );
+    ) != SQLITE_OK){
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return;
+    }
     
-    sqlite3_bind_text(stmt, 1, s.first_name, -1, SQLITE_TRANSIENT); 
-    sqlite3_bind_text(stmt, 2, s.last_name, -1,SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, s.date_of_birth, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, s.status, -1, SQLITE_TRANSIENT); 
-    sqlite3_bind_int(stmt, 5, s.id);
-
+    sqlite3_bind_text(stmt, 1, s -> first_name, -1, SQLITE_TRANSIENT); 
+    sqlite3_bind_text(stmt, 2, s -> last_name, -1,SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, s -> date_of_birth, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, s -> status, -1, SQLITE_TRANSIENT); 
+    sqlite3_bind_int(stmt, 5, s -> id);
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         printf("Update failed: %s\n", sqlite3_errmsg(db));
     } 
@@ -147,9 +154,9 @@ void db_update_student(sqlite3 *db, Student s){
 void CreateCourseTable(sqlite3* db){
     char* sql = "CREATE TABLE IF NOT EXISTS course ("
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "course_id TEXT NOT NULL, "
                 "course_name TEXT NOT NULL, "
-                "course_code TEXT NOT NULL, "
-                "credits INTEGER NOT NULL);";
+                "professor TEXT NOT NULL);";
 
 
     if(sqlite3_exec(db, sql, NULL, NULL, NULL) != SQLITE_OK){
@@ -157,17 +164,20 @@ void CreateCourseTable(sqlite3* db){
     }
 }
 
-void db_insert_course(sqlite3* db, Course* c){
+int db_insert_course(sqlite3* db, Course* c){
     sqlite3_stmt* stmt; 
 
-    sqlite3_prepare_v2(
+    if(sqlite3_prepare_v2(
         db,
-        "INSERT INTO course(course_code, course_name, professor)"
+        "INSERT INTO course(course_id, course_name, professor)"
         "VALUES (?,?,?)",
         -1,
         &stmt,
         NULL
-    );
+    ) != SQLITE_OK){
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
     
     sqlite3_bind_text(stmt, 1, c -> course_id, -1, SQLITE_TRANSIENT); 
     sqlite3_bind_text(stmt, 2, c -> course_name, -1, SQLITE_TRANSIENT);
@@ -176,10 +186,169 @@ void db_insert_course(sqlite3* db, Course* c){
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         printf("Insert course failed: %s\n", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return;
+        return 0;
     }
 
     sqlite3_finalize(stmt); 
+    return 1; 
+}
+
+int db_remove_course(sqlite3 *db, const char* id){
+    sqlite3_stmt* stmt; 
+    int rc = sqlite3_prepare_v2(
+        db,
+        "DELETE FROM course WHERE course_id = ?",
+        -1,
+        &stmt,
+        NULL
+    );
+    
+    if(rc != SQLITE_OK) {
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    
+    sqlite3_bind_text(stmt, 1, id, -1, SQLITE_TRANSIENT); 
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Delete failed: %s\n", sqlite3_errmsg(db));
+        return 0; 
+    } 
+    sqlite3_finalize(stmt); 
+    return 1;
+}
+
+int db_update_course(sqlite3 *db, Course* c){
+    sqlite3_stmt* stmt; 
+
+    if(sqlite3_prepare_v2(
+        db,
+        "UPDATE course SET course_name = ?, professor = ? WHERE course_id = ?",
+        -1,
+        &stmt,
+        NULL
+    ) != SQLITE_OK){
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    
+    sqlite3_bind_text(stmt, 1, c -> course_name, -1, SQLITE_TRANSIENT); 
+    sqlite3_bind_text(stmt, 2, c -> professor, -1,SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, c -> course_id, -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Update course failed: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    sqlite3_finalize(stmt); 
+    return 1;
+}    
+
+void load_courses(sqlite3 *db, Course_List* list){
+   sqlite3_stmt* stmt; 
+   
+   if (sqlite3_prepare_v2(
+        db,
+        "SELECT * FROM course",
+        -1,
+        &stmt,
+        NULL) != SQLITE_OK){
+            printf("Error preparing SELECT statement: %s\n", sqlite3_errmsg(db));
+            return;
+   }
+
+   while(sqlite3_step(stmt) == SQLITE_ROW){
+        const char* course_id = (const char*) sqlite3_column_text(stmt, 1);
+        const char* course_name = (const char*) sqlite3_column_text(stmt, 2);
+        const char* professor = (const char*) sqlite3_column_text(stmt, 3);
+        Course* temp = malloc(sizeof(Course)); 
+        strcpy(temp -> course_id, course_id);
+        strcpy(temp -> course_name, course_name);
+        strcpy(temp -> professor, professor);
+        temp -> next = NULL;
+
+        Insert_course_list(list, temp);
+   }
+
+   sqlite3_finalize(stmt); 
+}
+
+
+
+/////////////////////////////////////END OF COURSE DATABASE FUNCTIONS/////////////////////////////////////
+
+//////////////////////////////////MAJOR FUNCTIONS//////////////////////////////////////////
+
+void CreateMajorTable(sqlite3* db){
+    char* sql = "CREATE TABLE IF NOT EXISTS major ("
+                "major_id TEXT NOT NULL, "
+                "major_name TEXT NOT NULL, "
+                "head_professor TEXT NOT NULL),"
+                "capacity INTEGER, "
+                "enrolled_students INTEGER);"; 
+    
+    if(sqlite3_exec(db, sql, NULL, NULL, NULL) != SQLITE_OK){
+        printf("Create major table failed: %s\n", sqlite3_errmsg(db));
+    }
+}
+
+int db_insert_major(sqlite3* db, Major* major){
+    sqlite3_stmt* stmt; 
+
+    if(sqlite3_prepare_v2(
+        db,
+        "INSERT INTO major(major_id, major_name, head_professor, capacity, enrolled_students)"
+        "VALUES (?,?,?,?,?)",
+        -1,
+        &stmt,
+        NULL
+    ) != SQLITE_OK){
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    
+    sqlite3_bind_text(stmt, 1, major -> major_id, -1, SQLITE_TRANSIENT); 
+    sqlite3_bind_text(stmt, 2, major -> major_name, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, major -> head_professor, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 4, major -> capacity);
+    sqlite3_bind_int(stmt, 5, major -> enrolled_students);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Insert major failed: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    sqlite3_finalize(stmt); 
+
+    return 1;
+}
+
+int db_remove_major(sqlite3 *db, const char* major_id){
+    sqlite3_stmt* stmt; 
+    int rc = sqlite3_prepare_v2(
+        db,
+        "DELETE FROM major WHERE major_id = ?",
+        -1,
+        &stmt,
+        NULL
+    );
+    
+    if(rc != SQLITE_OK) {
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    
+    sqlite3_bind_text(stmt, 1, major_id, -1, SQLITE_TRANSIENT); 
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Delete failed: %s\n", sqlite3_errmsg(db));
+        return 0; 
+    } 
+    sqlite3_finalize(stmt); 
+    return 1;
 }
 
 
@@ -209,4 +378,8 @@ void db_insert_course(sqlite3* db, Course* c){
 
 
 
-/////////////////////////////////////END OF COURSE DATABASE FUNCTIONS/////////////////////////////////////
+
+
+
+
+/////////////////////////////////END OF MAJOR FUNCTIONS/////////////////////////////////////

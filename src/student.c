@@ -56,7 +56,7 @@ Student* CreateNode(){
     Student* temp = malloc(sizeof(Student)); 
 
     if(temp == NULL){
-        printf("Error: Could not allocate memory\n"); 
+        printf("Error: Could not allocate memory. Failed to create student.\n"); 
         return NULL; 
     }
 
@@ -81,6 +81,7 @@ int Insert_student_list(Student_List* list, Student* student) {
     else if(list -> head == NULL){
         list -> head = student;
         list -> num_of_students++;
+        printf("Student with ID %d added successfully.\n", student -> id);
         return 1; 
     }
 
@@ -90,18 +91,41 @@ int Insert_student_list(Student_List* list, Student* student) {
     }
     temp -> next = student;
     list -> num_of_students++;
+    printf("Student with ID %d added successfully.\n", student -> id);
     return 1;
 }
 
 
-void Save_student(sqlite3 *db, Student_List* list, Student* student){
+int Save_student(sqlite3 *db, Student_List* list, Student* student){
 
     if(!db_insert_student(db, student)){
         printf("Error: Could not insert student into database\n");
-        return; 
+        return 0; 
     }
-    
-    Insert_student_list(list, student);
+
+    if(!Insert_student_list(list, student)){
+        printf("Error: Could not insert student into list\n");
+        db_remove_student(db, student->id);
+        return 0;
+    }
+
+    return 1;
+}
+
+void printStudent(Student_List* list, int id){
+    Student* temp = list -> head;
+    while(temp != NULL){
+        if(temp -> id == id){
+            printf("Student Details:\n");
+            printf("ID: %d\n", temp -> id);
+            printf("First Name: %s\n", temp -> first_name);
+            printf("Last Name: %s\n", temp -> last_name);
+            printf("Date of Birth: %s\n", temp -> date_of_birth);
+            printf("Status: %s\n", temp -> status);
+            return;
+        }
+        temp = temp -> next; 
+    }
 }
 
 void printList(Student_List* list){
@@ -118,7 +142,7 @@ void printList(Student_List* list){
     printf("________________________________________________________________\n");
 }
 
-void removeStudent(sqlite3 *db, Student_List* list, int id){
+int removeStudent(sqlite3 *db, Student_List* list, int id){
     Student* temp = list -> head;
     Student* prev = NULL;
 
@@ -129,7 +153,7 @@ void removeStudent(sqlite3 *db, Student_List* list, int id){
 
     if(temp == NULL){
         printf("Student with ID %d not found.\n", id);
-        return; 
+        return 0; 
     }
 
     if(prev == NULL){
@@ -148,10 +172,10 @@ void removeStudent(sqlite3 *db, Student_List* list, int id){
     printf("Student with ID %d removed successfully.\n", id);
 
     db_remove_student(db, id);
-    return; 
+    return 1; 
 }
 
-void updateStudent(sqlite3 *db, Student_List* list, int id){
+int updateStudent(sqlite3 *db, Student_List* list, int id){
     Student* temp = list -> head; 
 
     while(temp != NULL && temp -> id != id){
@@ -160,7 +184,7 @@ void updateStudent(sqlite3 *db, Student_List* list, int id){
 
     if(temp == NULL){
         printf("Student with ID %d not found.\n", id);
-        return; 
+        return 0; 
     }
 
     printf("Current details:\n");
@@ -172,10 +196,11 @@ void updateStudent(sqlite3 *db, Student_List* list, int id){
     printf("What fields do you want to update?\n");
 
     printf("1. First Name (y/n)\n");
-    char choice;
-    scanf(" %c", &choice);
-    getchar();    
-    if(choice == 'y' || choice == 'Y'){
+    char choice[10];
+    fgets(choice, sizeof(choice), stdin);
+    choice[strcspn(choice, "\n")] = 0;
+
+    if(choice[0] == 'y' || choice[0] == 'Y'){
         char new_first_name[50];
         printf("Enter new First Name: ");
         fgets(new_first_name, sizeof(new_first_name), stdin);
@@ -185,9 +210,9 @@ void updateStudent(sqlite3 *db, Student_List* list, int id){
     }
 
     printf("2. Last Name (y/n)\n");
-    scanf(" %c", &choice);
-    getchar();
-    if(choice == 'y' || choice == 'Y'){
+    fgets(choice, sizeof(choice), stdin);
+    choice[strcspn(choice, "\n")] = 0;
+    if(choice[0] == 'y' || choice[0] == 'Y'){
         char new_last_name[50];
         printf("Enter new Last Name: ");
         fgets(new_last_name, sizeof(new_last_name), stdin);
@@ -197,9 +222,9 @@ void updateStudent(sqlite3 *db, Student_List* list, int id){
     }
     
     printf("3. Date of Birth (y/n)\n");
-    scanf(" %c", &choice);
-    getchar();
-    if(choice == 'y' || choice == 'Y'){
+    fgets(choice, sizeof(choice), stdin);
+    choice[strcspn(choice, "\n")] = 0;
+    if(choice[0] == 'y' || choice[0] == 'Y'){
         char new_dob[11];
         printf("Enter new Date of Birth (YYYY-MM-DD): ");
         fgets(new_dob, sizeof(new_dob), stdin);
@@ -209,9 +234,9 @@ void updateStudent(sqlite3 *db, Student_List* list, int id){
     }
 
     printf("4. Status (y/n)\n");
-    scanf(" %c", &choice);
-    getchar();
-    if(choice == 'y' || choice == 'Y'){
+    fgets(choice, sizeof(choice), stdin);
+    choice[strcspn(choice, "\n")] = 0;
+    if(choice[0] == 'y' || choice[0] == 'Y'){
         char new_status[20];
         printf("Enter new Status: ");
         fgets(new_status, sizeof(new_status), stdin);
@@ -227,9 +252,9 @@ void updateStudent(sqlite3 *db, Student_List* list, int id){
 
     printf("Student with ID %d updated successfully.\n", id);
 
-    db_update_student(db, *temp); // You need to pass the database connection here
+    db_update_student(db, temp); // You need to pass the database connection here
 
-    return; 
+    return 1; 
 }
 
 void freeList(Student_List* list){
