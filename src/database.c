@@ -351,7 +351,70 @@ int db_remove_major(sqlite3 *db, const char* major_id){
     return 1;
 }
 
+int db_update_major(sqlite3 *db, Major* major){
+    sqlite3_stmt* stmt; 
 
+    if(sqlite3_prepare_v2(
+        db,
+        "UPDATE major SET major_name = ?, head_professor = ?, capacity = ?, enrolled_students = ? WHERE major_id = ?",
+        -1,
+        &stmt,
+        NULL
+    ) != SQLITE_OK){
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    
+    sqlite3_bind_text(stmt, 1, major -> major_name, -1, SQLITE_TRANSIENT); 
+    sqlite3_bind_text(stmt, 2, major -> head_professor, -1,SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 3, major -> capacity);
+    sqlite3_bind_int(stmt, 4, major -> enrolled_students);
+    sqlite3_bind_text(stmt, 5, major -> major_id, -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Update major failed: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    sqlite3_finalize(stmt);
+
+    return 1;
+}
+
+void LoadMajors(sqlite3 *db, Major_List* list){
+   sqlite3_stmt* stmt; 
+   
+   if (sqlite3_prepare_v2(
+        db,
+        "SELECT * FROM major",
+        -1,
+        &stmt,
+        NULL) != SQLITE_OK){
+            printf("Error preparing SELECT statement: %s\n", sqlite3_errmsg(db));
+            return;
+   }
+
+   while(sqlite3_step(stmt) == SQLITE_ROW){
+        const char* major_id = (const char*) sqlite3_column_text(stmt, 0);
+        const char* major_name = (const char*) sqlite3_column_text(stmt, 1);
+        const char* head_professor = (const char*) sqlite3_column_text(stmt, 2);
+        int capacity = sqlite3_column_int(stmt, 3);
+        int enrolled_students = sqlite3_column_int(stmt, 4);
+
+        Major* temp = malloc(sizeof(Major)); 
+        temp -> major_id = strdup(major_id);
+        temp -> major_name = strdup(major_name);
+        temp -> head_professor = strdup(head_professor);
+        temp -> capacity = capacity;
+        temp -> enrolled_students = enrolled_students;
+        temp -> next = NULL;
+
+        Insert_major_list(list, temp);
+   }
+
+   sqlite3_finalize(stmt); 
+}
 
 
 
@@ -383,3 +446,102 @@ int db_remove_major(sqlite3 *db, const char* major_id){
 
 
 /////////////////////////////////END OF MAJOR FUNCTIONS/////////////////////////////////////
+
+////////////////////////////////MAJOR COURSE FUNCTIONS/////////////////////////////////////
+
+void CreateMajorCourseTable(sqlite3* db){
+    char* sql = "CREATE TABLE IF NOT EXISTS major_course ("
+                "major_id TEXT NOT NULL, "
+                "course_id TEXT NOT NULL, "
+                "course_name TEXT NOT NULL,"
+                "professor TEXT NOT NULL);"; 
+    
+    if(sqlite3_exec(db, sql, NULL, NULL, NULL) != SQLITE_OK){
+        printf("Create major_course table failed: %s\n", sqlite3_errmsg(db));
+    }
+}
+
+int db_insert_major_course(sqlite3* db, const char* major_id, Course* c){
+    sqlite3_stmt* stmt; 
+
+    if(sqlite3_prepare_v2(
+        db,
+        "INSERT INTO major_course(major_id, course_id, course_name, professor)"
+        "VALUES (?,?,?,?)",
+        -1,
+        &stmt,
+        NULL
+    ) != SQLITE_OK){
+        printf("Prepare failed: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    
+    sqlite3_bind_text(stmt, 1, major_id, -1, SQLITE_TRANSIENT); 
+    sqlite3_bind_text(stmt, 2, c -> course_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, c -> course_name, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, c -> professor, -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Insert major_course failed: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    sqlite3_finalize(stmt);
+    return 1;
+}
+
+void load_major_courses(sqlite3 *db, Major_List* major_list){
+   sqlite3_stmt* stmt; 
+   
+   if (sqlite3_prepare_v2(
+        db,
+        "SELECT * FROM major_course",
+        -1,
+        &stmt,
+        NULL) != SQLITE_OK){
+            printf("Error preparing SELECT statement: %s\n", sqlite3_errmsg(db));
+            return;
+   }
+
+   while(sqlite3_step(stmt) == SQLITE_ROW){
+        const char* major_id = (const char*) sqlite3_column_text(stmt, 0);
+        const char* course_id = (const char*) sqlite3_column_text(stmt, 1);
+        const char* course_name = (const char*) sqlite3_column_text(stmt, 2);
+        const char* professor = (const char*) sqlite3_column_text(stmt, 3);
+
+        Major* major = major_list -> head;
+        while(major != NULL && strcmp(major -> major_id, major_id) != 0){
+            major = major -> next; 
+        }
+
+        if(major != NULL){
+            Course* new_course = malloc(sizeof(Course));
+            new_course -> course_id = strdup(course_id);
+            new_course -> course_name = strdup(course_name);
+            new_course -> professor = strdup(professor);
+            new_course -> next = NULL;
+
+            Insert_course_list(major -> course_list, new_course);
+        }
+   }
+
+   sqlite3_finalize(stmt); 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////END OF MAJOR COURSE FUNCTIONS/////////////////////////////////

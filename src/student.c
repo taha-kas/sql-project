@@ -91,6 +91,7 @@ int Insert_student_list(Student_List* list, Student* student) {
     }
     temp -> next = student;
     list -> num_of_students++;
+
     printf("Student with ID %d added successfully.\n", student -> id);
     return 1;
 }
@@ -273,67 +274,4 @@ void freeList(Student_List* list){
 
     free(list);
     printf("List had been freed successfully.\n");
-}
-
-int main(){
-
-    printf("Enter the password: ");
-    char password[50]; 
-    fgets(password, sizeof(password), stdin); 
-    password[strcspn(password, "\n")] = '\0';
-
-    if(strcmp(password, "admin123") != 0){
-        printf("Error: Incorrect password\n");
-        return 1; 
-    }
-
-    printf("Password accepted. Access granted.\n");
-
-    sqlite3 *test;
-    char *err_msg = 0;
-
-    db_connect(&test, "test.db");
-
-    // Create a table
-    CreateStudentTable(test); 
-
-    // Query and display the data
-    Student_List* list = CreateList();
-    
-    // printf("How many students do you want to add: ");
-    // int num; 
-    // scanf("%d", &num);
-    // getchar();
-
-    // for(int i = 0; i < num; i++){
-    //     Student* new_student = CreateNode();
-    //     if(new_student != NULL){
-    //         Save_student(test, list, new_student);
-    //     } else {
-    //         printf("Failed to create student. Skipping...\n");
-    //     }
-    // }
-
-    load_students(test, list);
-
-    // removeStudent(test, list, 7);
-
-    updateStudent(test, list, 9);
-
-    // load_students(test, list);
-
-
-    // removeStudent(test, list, 8);
-
-    printList(list);
-    
-
-    sqlite3_close(test);
-
-
-    printf("\nDatabase operations completed successfully!\n");
-    printf("Check your folder for 'test.db' file\n");
-
-
-    return 0;
 }

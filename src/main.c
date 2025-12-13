@@ -14,7 +14,7 @@ void MainMenu(){
     printf("_________________________________________\n");
     printf("1. Admin\n");
     printf("2. Student\n");
-    printf("3. Exit\n");
+    printf("3. Exit\n"); //if this is selected, program ends (return 0 in main)
     printf("_________________________________________\n");
     printf("Enter your choice (1, 2 or 3): ");
 
@@ -59,11 +59,26 @@ void CourseManagementMenu(){
     printf("2. Remove Course\n");
     printf("3. Update Course\n");
     printf("4. Add Course to Major\n");
-    printf("5. View Courses in a Major\n");
-    printf("6. View All Courses\n");
-    printf("7. Exit\n");
+    printf("5. View All Courses\n");
+    printf("6. Exit\n");
     printf("_________________________________________\n"); 
-    printf("Enter your choice (1-7): "); 
+    printf("Enter your choice (1-6): "); 
+
+    return; 
+}
+
+void MajorManagementMenu(){
+    printf("\n_________________________________________\n");
+    printf("Major Management Menu:\n");
+    printf("_________________________________________\n");
+    printf("1. Add Major\n");
+    printf("2. Remove Major\n");
+    printf("3. Update Major\n");
+    printf("4. View All Majors\n");
+    printf("5. View Courses in Major\n");
+    printf("6. Exit\n");
+    printf("_________________________________________\n"); 
+    printf("Enter your choice (1-5): "); 
 
     return; 
 }
@@ -77,6 +92,9 @@ int main(){
 
     Student_List* StudentList = CreateList();
     load_students(test, StudentList);
+
+    Major_List* MajorList = CreateMajorList();
+    // LoadMajors(test, MajorList); Use this when major functionalities are implemented
 
     Course_List* CourseList = malloc(sizeof(Course_List));
     CourseList -> head = NULL;
@@ -138,8 +156,11 @@ int main(){
             if(choice == 1){
                 printf("Add Student selected.\n");
                 printf("_________________________________________\n");
+
+                
                 Student* new_student = CreateNode();
                 Save_student(test, StudentList, new_student);
+                
                 printf("_________________________________________\n");
                 StudentManagementMenu();
             }
@@ -151,6 +172,10 @@ int main(){
                 int id;
                 scanf("%d", &id);
                 getchar();
+
+                printf("Removing Student ID %d...\n", id);
+                Sleep(2000);
+
                 removeStudent(test, StudentList, id);
                 printf("_________________________________________\n");
                 StudentManagementMenu();
@@ -163,6 +188,10 @@ int main(){
                 int id;
                 scanf("%d", &id);
                 getchar();
+
+                printf("Updating Student ID %d...\n", id);
+                Sleep(2000);
+
                 updateStudent(test, StudentList, id);
                 printf("_________________________________________\n");
                 StudentManagementMenu();
@@ -171,10 +200,15 @@ int main(){
             else if(choice == 4){
                 printf("View Student by ID selected.\n");
                 printf("_________________________________________\n");
+
                 printf("Enter Student ID to view: ");
                 int id;
                 scanf("%d", &id);
                 getchar();
+
+                printf("Fetching details for Student ID %d...\n", id);
+                Sleep(2000);
+
                 printStudent(StudentList, id);
                 printf("_________________________________________\n");
                 StudentManagementMenu();
@@ -183,6 +217,10 @@ int main(){
             else if(choice == 5){
                 printf("View All Students selected.\n");
                 printf("_________________________________________\n");
+
+                printf("Printing all students...\n");
+                Sleep(2000);
+
                 printList(StudentList);
                 printf("_________________________________________\n");
                 StudentManagementMenu();
@@ -190,7 +228,7 @@ int main(){
 
             else if(choice == 6){
                 printf("Exiting Student Management.\n");
-                _sleep(1000);
+                Sleep(1000);
                 AdminFunctionMenu();
             }
         }
@@ -203,8 +241,8 @@ int main(){
             int course_choice;
             scanf("%d", &course_choice);
             getchar();
-            while(course_choice < 1 || course_choice > 7){
-                printf("Invalid choice. Please enter a number between 1 and 7: ");
+            while(course_choice < 1 || course_choice > 6){
+                printf("Invalid choice. Please enter a number between 1 and 6: ");
                 scanf("%d", &course_choice);
                 getchar();
             }
@@ -212,7 +250,12 @@ int main(){
             if(course_choice == 1){
                 printf("Add Course selected.\n");
                 printf("_________________________________________\n");
+
                 Course* new_course = createCourse();
+
+                printf("Adding Course %s...\n", new_course->course_id);
+                Sleep(2000);
+
                 SaveCourse(test, CourseList, new_course);
                 printf("_________________________________________\n");
                 CourseManagementMenu();
@@ -221,10 +264,16 @@ int main(){
             else if(course_choice == 2){
                 printf("Remove Course selected.\n");
                 printf("_________________________________________\n");
+
                 printf("Enter Course ID to remove: ");
+
                 char course_id[10];
                 fgets(course_id, sizeof(course_id), stdin); 
                 course_id[strcspn(course_id, "\n")] = '\0';
+
+                printf("Removing Course %s...\n", course_id);
+                Sleep(2000);
+
                 removeCourse(test, CourseList, course_id);
                 printf("_________________________________________\n");
                 CourseManagementMenu();
@@ -233,10 +282,16 @@ int main(){
             else if(course_choice == 3){
                 printf("Update Course selected.\n");
                 printf("_________________________________________\n");
+
                 printf("Enter Course ID to update: ");
+
                 char course_id[10];
                 fgets(course_id, sizeof(course_id), stdin);
                 course_id[strcspn(course_id, "\n")] = '\0';
+
+                printf("Updating Course %s...\n", course_id);
+                Sleep(2000);
+
                 updateCourse(test, CourseList, course_id);
                 printf("_________________________________________\n");
                 CourseManagementMenu();
@@ -245,39 +300,174 @@ int main(){
             else if(course_choice == 4){
                 printf("Add Course to Major selected.\n");
                 printf("_________________________________________\n");
-                // To be implemented
+
+                char major_id[10];
+                printf("Enter Major ID: ");
+                fgets(major_id, sizeof(major_id), stdin);
+                major_id[strcspn(major_id, "\n")] = '\0'; 
+
+                char course_id[10];
+                printf("Enter Course ID: ");
+                fgets(course_id, sizeof(course_id), stdin);
+                course_id[strcspn(course_id, "\n")] = '\0';
+
+                char course_name[100];
+                printf("Enter Course Name: ");
+                fgets(course_name, sizeof(course_name), stdin);
+                course_name[strcspn(course_name, "\n")] = '\0';
+
+                char professor[100];
+                printf("Enter Professor Name: ");
+                fgets(professor, sizeof(professor), stdin);
+                professor[strcspn(professor, "\n")] = '\0';
+
+                printf("Adding Course %s to Major %s...\n", course_name, major_id);
+                Sleep(2000);
+
+                add_course_to_major(test, MajorList, major_id, course_id, course_name, professor);
+
+                printf("_________________________________________\n");
+                CourseManagementMenu();
             }
 
             else if(course_choice == 5){
-                printf("View Courses in a Major selected.\n");
-                printf("_________________________________________\n");
-                // To be implemented
-            }
-
-            else if(course_choice == 6){
                 printf("View All Courses selected.\n");
+                printf("printing all courses...\n");
+                Sleep(2000);
                 printf("_________________________________________\n");
+
                 printAllCourses(CourseList);
+
                 printf("_________________________________________\n");
                 CourseManagementMenu();
 
             }
 
-            else if(course_choice == 7){
-                printf("Exiting Course Management.\n");
-                _sleep(1000);
+            else if(course_choice == 6){
+                printf("Exiting Course Management...\n");
+                Sleep(2000);
                 AdminFunctionMenu();
             }
         }
 
         else if(admin_choice == 3){
             printf("Major management selected.\n");
-            // To be implemented
+
+            MajorManagementMenu();
+
+            int major_choice;
+            scanf("%d", &major_choice);
+            getchar();
+
+            while(major_choice < 1 || major_choice > 6){
+                printf("Invalid choice. Please enter a number between 1 and 6: ");
+                scanf("%d", &major_choice);
+                getchar();
+            }
+
+            if(major_choice == 1){
+                printf("Add Major selected.\n");
+                printf("_________________________________________\n");
+
+                Major* new_major = CreateMajor();
+
+                printf("Adding Major %s...\n", new_major->major_id);
+                Sleep(2000);
+
+                Insert_major_list(MajorList, new_major);
+                db_insert_major(test, new_major);
+
+                printf("_________________________________________\n");
+                MajorManagementMenu();
+            }
+
+            else if(major_choice == 2){
+                printf("Remove Major selected.\n");
+                printf("_________________________________________\n");
+
+                char major_id[10];
+                printf("Enter Major ID to remove: ");
+                fgets(major_id, sizeof(major_id), stdin);
+                major_id[strcspn(major_id, "\n")] = '\0';
+
+                printf("Removing Major %s...\n", major_id);
+                Sleep(2000);
+
+                removeMajor(test, MajorList, major_id);
+
+                printf("_________________________________________\n");
+                MajorManagementMenu();
+            }
+
+            else if(major_choice == 3){
+                printf("Update Major selected.\n");
+                printf("_________________________________________\n");
+
+                char major_id[10];
+                printf("Enter Major ID to update: ");
+                fgets(major_id, sizeof(major_id), stdin);
+                major_id[strcspn(major_id, "\n")] = '\0';
+
+                printf("Updating Major %s...\n", major_id);
+                Sleep(2000);
+
+                UpdateMajor(test, MajorList, major_id);
+
+                printf("_________________________________________\n");
+                MajorManagementMenu();
+            }
+
+            else if(major_choice == 4){
+                printf("View All Majors selected.\n");
+                printf("Printing all majors...\n");
+                Sleep(2000);
+                printf("_________________________________________\n");
+
+                printAllMajors(MajorList);
+
+                printf("_________________________________________\n");
+                MajorManagementMenu();
+
+            }
+
+            else if(major_choice == 5){
+                printf("View Courses in Major selected.\n");
+                printf("_________________________________________\n");
+
+                char major_id[10];
+                printf("Enter Major ID to view courses: ");
+                fgets(major_id, sizeof(major_id), stdin);
+                major_id[strcspn(major_id, "\n")] = '\0';
+
+                printf("Fetching courses for Major %s...\n", major_id);
+                Sleep(2000);
+
+                print_courses_in_major(MajorList, major_id);
+
+                printf("_________________________________________\n");
+                MajorManagementMenu();
+
+            }
+
+            else if(major_choice == 6){
+                printf("Exiting Major Management...\n");
+                Sleep(2000);
+                AdminFunctionMenu();
+            }
         }
 
     }
 
+    else if(choice == 2){
+        printf("Student functionalities are not yet implemented.\n");
+    }
 
+    else if(choice == 3){
+        printf("Exiting program. Goodbye!\n");
+        Sleep(2000);
+        sqlite3_close(test);
+        return 0;
+    }
     
     
 
