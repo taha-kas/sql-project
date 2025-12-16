@@ -29,18 +29,18 @@ Major* CreateMajor(){
 
     //Get Major ID:
     printf("Enter Major ID: ");
-    fgets(new_major -> major_id, sizeof(new_major -> major_id), stdin); 
-    new_major -> major_id[strcspn(new_major -> major_id, "\n")] = '\0';
+    char major_id[50];
+    fgets(major_id, sizeof(major_id), stdin); 
+    major_id[strcspn(major_id, "\n")] = '\0';
+    new_major -> major_id = strdup(major_id);
 
     //Get Major Name:
     printf("Enter Major Name: ");
-    fgets(new_major -> major_name, sizeof(new_major -> major_name), stdin); 
-    new_major -> major_name[strcspn(new_major -> major_name, "\n")] = '\0';
+    char major_name[100];
+    fgets(major_name, sizeof(major_name), stdin); 
+    major_name[strcspn(major_name, "\n")] = '\0';
+    new_major -> major_name = strdup(major_name);
     
-    new_major -> head_professor = NULL;
-    new_major -> capacity = 30;
-    new_major -> enrolled_students = 0;
-
     //Get Head Professor Name:
     printf("Enter Head Professor Name: ");
     char head_professor_name[50];
@@ -48,6 +48,9 @@ Major* CreateMajor(){
     head_professor_name[strcspn(head_professor_name, "\n")] = '\0';
     new_major -> head_professor = strdup(head_professor_name);  
     
+    new_major -> capacity = 30;
+    new_major -> course_list = CreateCourseList();
+    new_major -> enrolled_students = 0;
     new_major -> next = NULL;
 
     return new_major;
@@ -107,13 +110,17 @@ int removeMajor(sqlite3* db, Major_List* list, char* major_id){
 
     if(prev == NULL){
         list -> head = temp -> next;
-        free(temp);
     }
-                                                //To check if correct or not later: free(temp -> courses)
+    
     else{
         prev -> next = temp -> next; 
-        free(temp);
     }
+
+    free(temp -> major_id);
+    free(temp -> major_name);
+    free(temp -> head_professor);
+    freeCourseList(temp -> course_list);
+    free(temp);
 
     if(!db_remove_major(db, major_id)){
         printf("Error: Could not remove major from database\n");
@@ -157,7 +164,7 @@ int UpdateMajor(sqlite3 *db, Major_List* list, char* major_id){
         printf("Enter new Major Name: ");
         fgets(new_major_name, sizeof(new_major_name), stdin);
         new_major_name[strcspn(new_major_name, "\n")] = 0;
-        strcpy(temp -> major_name, new_major_name);
+        temp -> major_name = strdup(new_major_name);
     }
 
     printf("2. Head Professor (y/n)\n");
@@ -167,7 +174,7 @@ int UpdateMajor(sqlite3 *db, Major_List* list, char* major_id){
         printf("Enter new Head Professor Name: ");
         fgets(new_head_professor, sizeof(new_head_professor), stdin);
         new_head_professor[strcspn(new_head_professor, "\n")] = 0;
-        strcpy(temp -> head_professor, new_head_professor);
+        temp -> head_professor = strdup(new_head_professor);
     }
 
     printf("3. Capacity (y/n)\n");

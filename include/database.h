@@ -10,7 +10,7 @@ typedef struct Course{
 }Course;
 
 typedef struct{
-    Course* head;
+    Course* head;   
     int num_of_courses;
 }Course_List;
 
@@ -29,16 +29,16 @@ typedef struct{
     int num_of_majors;
 }Major_List;
 
-typedef struct Major_Course{
-    char* major_id;
-    char** course_ids;
-    char** course_names;
-} Major_Course;
+// typedef struct Major_Course{
+//     char* major_id;
+//     char** course_ids;
+//     char** course_names;
+// } Major_Course;
 
-typedef struct{
-    Major_Course* head;
-    int num_of_courses;
-} Major_Course_List;
+// typedef struct{
+//     Major_Course* head;
+//     int num_of_courses;
+// } Major_Course_List;
 
 typedef struct Student{
     int id;
@@ -46,7 +46,7 @@ typedef struct Student{
     char* last_name; 
     char* date_of_birth;  
     char* status;         
-    Major* major;
+    char* major_id;
     struct Student* next; 
 }Student;
 
@@ -68,6 +68,7 @@ int removeStudent(sqlite3 *db, Student_List* list, int id);
 void printStudent(Student_List* list, int id);
 void printList(Student_List* list);
 void freeList(Student_List* list);
+void importFromCSV(sqlite3 *db, Student_List* list, const char* filename);
 ///////////////////////////////END OF STUDENT FUNCTIONS/////////////////////////////////////
 
 
@@ -82,6 +83,7 @@ int updateCourse(sqlite3 *db, Course_List* list, char* course_id);
 int removeCourse(sqlite3 *db, Course_List* list, char* course_id);
 void print_courses_in_major(Major_List* list, char* major_id);
 int printAllCourses(Course_List* list);
+int freeCourseList(Course_List* list);
 ////////////////////////////////END OF COURSES FUNCTIONS/////////////////////////////////////
 
 

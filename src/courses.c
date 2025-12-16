@@ -79,6 +79,12 @@ int SaveCourse(sqlite3 *db, Course_List* list, Course* course){
 
 //Might need to pass db connection later
 void add_course_to_major(sqlite3 *db, Major_List* list, char* major_id, char* course_id, char* course_name, char* professor){
+
+    if(!list || !major_id || !course_id || !course_name || !professor){
+        printf("Error: Invalid parameters .\n");
+        return; 
+    }
+
     Major* major = list -> head;
 
     while(major != NULL && strcmp(major -> major_id, major_id) != 0){
@@ -306,7 +312,7 @@ int freeCourseList(Course_List* list){
         temp = next; 
     }
 
-    //free(list); //Optional: if we want to free the whole list structure and not only its content
+    free(list); //Optional: if we want to free the whole list structure and not only its content
     printf("Course list has been freed successfully.\n");
     return 1; 
 }

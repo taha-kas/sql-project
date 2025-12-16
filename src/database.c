@@ -264,9 +264,9 @@ void load_courses(sqlite3 *db, Course_List* list){
         const char* course_name = (const char*) sqlite3_column_text(stmt, 2);
         const char* professor = (const char*) sqlite3_column_text(stmt, 3);
         Course* temp = malloc(sizeof(Course)); 
-        strcpy(temp -> course_id, course_id);
-        strcpy(temp -> course_name, course_name);
-        strcpy(temp -> professor, professor);
+        temp -> course_id = strdup(course_id);
+        temp -> course_name = strdup(course_name);
+        temp -> professor = strdup(professor);
         temp -> next = NULL;
 
         Insert_course_list(list, temp);
@@ -285,7 +285,7 @@ void CreateMajorTable(sqlite3* db){
     char* sql = "CREATE TABLE IF NOT EXISTS major ("
                 "major_id TEXT NOT NULL, "
                 "major_name TEXT NOT NULL, "
-                "head_professor TEXT NOT NULL),"
+                "head_professor TEXT NOT NULL,"
                 "capacity INTEGER, "
                 "enrolled_students INTEGER);"; 
     

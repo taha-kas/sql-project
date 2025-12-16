@@ -40,18 +40,18 @@ Student* CreateNode(){
     fgets(dob, sizeof(dob), stdin);
     dob[strcspn(dob, "\n")] = '\0';
 
-    //Get Status:
-    printf("Enter Status (pending/active/graduated/dropped): ");
-    char status[20]; 
-    fgets(status, sizeof(status), stdin); 
-    status[strcspn(status, "\n")] = '\0'; 
+    // //Get Status:
+    // printf("Enter Status (pending/active/graduated/dropped): ");
+    // char status[20]; 
+    // fgets(status, sizeof(status), stdin); 
+    // status[strcspn(status, "\n")] = '\0'; 
 
-    //Check for valid status:
-    while(strcmp(status, "pending") != 0 && strcmp(status, "active") != 0 && strcmp(status, "graduated") != 0 && strcmp(status, "dropped") != 0){
-        printf("Invalid status. Please enter one of the following: pending, active, graduated, dropped\n");
-        fgets(status, sizeof(status), stdin);
-        status[strcspn(status, "\n")] = '\0'; 
-    }
+    // //Check for valid status:
+    // while(strcmp(status, "pending") != 0 && strcmp(status, "active") != 0 && strcmp(status, "graduated") != 0 && strcmp(status, "dropped") != 0){
+    //     printf("Invalid status. Please enter one of the following: pending, active, graduated, dropped\n");
+    //     fgets(status, sizeof(status), stdin);
+    //     status[strcspn(status, "\n")] = '\0'; 
+    // }
 
     Student* temp = malloc(sizeof(Student)); 
 
@@ -64,11 +64,51 @@ Student* CreateNode(){
     temp -> first_name = strdup(first_name);
     temp -> last_name = strdup(last_name);
     temp -> date_of_birth = strdup(dob);
-    temp -> status = strdup(status);
+    temp -> status = strdup("pending");
     temp -> next = NULL;
 
 
     return temp;
+}
+
+void importFromCSV(sqlite3 *db, Student_List* list, const char* filename){
+    FILE* file = fopen(filename, "r");
+    if(file == NULL){
+        printf("Error: Could not open file %s\n", filename);
+        return; 
+    }
+
+    char line[256];
+    while(fgets(line, sizeof(line), file)){
+        char* token = strtok(line, ",");
+        if(token == NULL){
+            continue; 
+        }
+        char* first_name = token;
+
+        token = strtok(NULL, ",");
+        if(token == NULL){
+            continue;
+        } 
+        char* last_name = token;
+
+        token = strtok(NULL, ",");
+        if(token == NULL){
+            continue;
+        }
+        char* dob = token;
+
+        Student* new_student = malloc(sizeof(Student));
+        new_student -> first_name = strdup(first_name);
+        new_student -> last_name = strdup(last_name);
+        new_student -> date_of_birth = strdup(dob);
+        new_student -> status = strdup("pending");
+        new_student -> next = NULL;
+
+        Save_student(db, list, new_student);
+    }
+
+    fclose(file);
 }
 
 int Insert_student_list(Student_List* list, Student* student) {
@@ -92,7 +132,6 @@ int Insert_student_list(Student_List* list, Student* student) {
     temp -> next = student;
     list -> num_of_students++;
 
-    printf("Student with ID %d added successfully.\n", student -> id);
     return 1;
 }
 
@@ -109,6 +148,8 @@ int Save_student(sqlite3 *db, Student_List* list, Student* student){
         db_remove_student(db, student->id);
         return 0;
     }
+
+    printf("Student with ID %d saved successfully.\n", student -> id);
 
     return 1;
 }
@@ -129,14 +170,27 @@ void printStudent(Student_List* list, int id){
     }
 }
 
-void printList(Student_List* list){
+void printStudentList(Student_List* list, Major_List* major_list, char* major_id){
+
+    //First, check if major exists
+    Major* major = major_list -> head;
+    while(major != NULL && strcmp(major -> major_id, major_id) != 0){
+        major = major -> next; 
+    }   
+
+    if(major == NULL){
+        printf("Major with ID %s not found.\n", major_id);
+        return; 
+    }
+
+    // Then, print students in that major
     Student* temp = list -> head; 
 
     printf("Number of students: %d\n\n", list -> num_of_students);
     printf("________________________________________________________________\n");
     printf("%-5s%-15s%-15s%-12s%-10s\n", "ID", "First Name", "Last Name", "DOB", "Status");
     printf("________________________________________________________________\n");
-    while(temp != NULL){
+    while(temp != NULL && strcmp(temp -> major_id, major_id) == 0){
         printf("%-5d%-15s%-15s%-12s%-10s\n", temp -> id, temp -> first_name, temp -> last_name, temp -> date_of_birth, temp -> status);
         temp = temp -> next; 
     }
