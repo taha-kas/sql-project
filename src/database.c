@@ -21,7 +21,8 @@ char* sql = "CREATE TABLE IF NOT EXISTS student ("
       "first_name TEXT NOT NULL, "
       "last_name TEXT NOT NULL, "
       "date_of_birth TEXT NOT NULL, "
-      "status TEXT NOT NULL);";
+      "status TEXT NOT NULL,"
+      "major_id TEXT);";
 
 
 int rc = sqlite3_exec(db, sql, NULL, NULL, NULL);

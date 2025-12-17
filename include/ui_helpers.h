@@ -43,6 +43,7 @@ typedef struct {
     int commands_executed;
     int students_added;
     int students_imported;
+    int students_exported;
     int students_removed;
     int courses_added;
     int majors_added;

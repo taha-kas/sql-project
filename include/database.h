@@ -66,7 +66,7 @@ int Save_student(sqlite3 *db, Student_List* list, Student* student);
 int updateStudent(sqlite3 *db, Student_List* list, int id);
 int removeStudent(sqlite3 *db, Student_List* list, int id);
 void printStudent(Student_List* list, int id);
-void printList(Student_List* list);
+void printStudentList(Student_List* list, Major_List* major_list, char* major_id);
 void freeList(Student_List* list);
 void importFromCSV(sqlite3 *db, Student_List* list, const char* filename);
 ///////////////////////////////END OF STUDENT FUNCTIONS/////////////////////////////////////

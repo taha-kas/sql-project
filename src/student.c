@@ -3,6 +3,7 @@
 #include <string.h>
 #include "sqlite3.h"
 #include "database.h"
+#include "ui_helpers.h"
 
 
 
@@ -71,45 +72,246 @@ Student* CreateNode(){
     return temp;
 }
 
-void importFromCSV(sqlite3 *db, Student_List* list, const char* filename){
+void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
     FILE* file = fopen(filename, "r");
-    if(file == NULL){
-        printf("Error: Could not open file %s\n", filename);
-        return; 
+    if (file == NULL) {
+        printf("%s%s Could not open file%s\n", COLOR_RED, ICON_ERROR, COLOR_RESET);
+        printf("File: %s\n", filename);
+        increment_error_count();
+        return;
     }
 
     char line[256];
-    while(fgets(line, sizeof(line), file)){
+    int line_number = 0;
+    int imported_count = 0;
+    int error_count = 0;
+    
+    printf("%s%s Starting CSV import...%s\n", COLOR_CYAN, ICON_INFO, COLOR_RESET);
+    printf("File: %s\n", filename);
+    
+    while (fgets(line, sizeof(line), file)) {
+        line_number++;
+        
+        // Remove newline character
+        line[strcspn(line, "\n")] = '\0';
+        
+        // Skip empty lines
+        if (strlen(line) == 0) {
+            printf("%s%s Line %d: Empty line - skipped%s\n", 
+                   COLOR_YELLOW, ICON_WARNING, line_number, COLOR_RESET);
+            continue;
+        }
+        
+        // Check 1: Count commas to verify field count
+        int comma_count = 0;
+        for (int i = 0; line[i]; i++) {
+            if (line[i] == ',') comma_count++;
+        }
+        
+        // Expected: 2 commas for 3 fields (first_name,last_name,dob)
+        if (comma_count != 2) {
+            printf("%s%s Line %d: Invalid format - expected 3 fields, found %d%s\n", 
+                   COLOR_RED, ICON_ERROR, line_number, comma_count + 1, COLOR_RESET);
+            printf("  Line: %s\n", line);
+            error_count++;
+            increment_error_count();
+            continue;
+        }
+        
+        // Parse with validation
+        char* first_name = NULL;
+        char* last_name = NULL;
+        char* dob = NULL;
+        
+        // Parse first field
         char* token = strtok(line, ",");
-        if(token == NULL){
-            continue; 
-        }
-        char* first_name = token;
-
-        token = strtok(NULL, ",");
-        if(token == NULL){
+        if (token != NULL) {
+            first_name = token;
+            
+            // Check 2: First name not empty
+            if (strlen(first_name) == 0) {
+                printf("%s%s Line %d: First name cannot be empty%s\n", 
+                       COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                error_count++;
+                increment_error_count();
+                continue;
+            }
+            
+            // Check 3: First name length
+            if (strlen(first_name) > 50) {
+                printf("%s%s Line %d: First name too long (truncated)%s\n", 
+                       COLOR_YELLOW, ICON_WARNING, line_number, COLOR_RESET);
+                first_name[50] = '\0'; 
+            }
+        } else {
+            printf("%s%s Line %d: Missing first name%s\n", 
+                   COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+            error_count++;
+            increment_error_count();
             continue;
-        } 
-        char* last_name = token;
-
+        }
+        
+        // Parse second field
         token = strtok(NULL, ",");
-        if(token == NULL){
+        if (token != NULL) {
+            last_name = token;
+            
+            // Check 4: Last name not empty
+            if (strlen(last_name) == 0) {
+                printf("%s%s Line %d: Last name cannot be empty%s\n", 
+                       COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                error_count++;
+                increment_error_count();
+                continue;
+            }
+            
+            // Check 5: Last name length
+            if (strlen(last_name) > 50) {
+                printf("%s%s Line %d: Last name too long (truncated)%s\n", 
+                       COLOR_YELLOW, ICON_WARNING, line_number, COLOR_RESET);
+                last_name[50] = '\0'; 
+            }
+        } else {
+            printf("%s%s Line %d: Missing last name%s\n", 
+                   COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+            error_count++;
+            increment_error_count();
             continue;
         }
-        char* dob = token;
-
+        
+        // Parse third field
+        token = strtok(NULL, ",");
+        if (token != NULL) {
+            dob = token;
+            
+            // Check 6: Date of birth not empty
+            if (strlen(dob) == 0) {
+                printf("%s%s Line %d: Date of birth cannot be empty%s\n", 
+                       COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                error_count++;
+                increment_error_count();
+                continue;
+            }
+            
+            // Check 7: Validate date format (basic)
+            int valid_date = 1;
+            if (strlen(dob) != 10) {
+                valid_date = 0;
+            } else if (dob[4] != '-' || dob[7] != '-') {
+                valid_date = 0;
+            } else {
+                // Check if year, month, day positions are digits
+                for (int i = 0; i < 10; i++) {
+                    if (i == 4 || i == 7) continue; // Skip hyphens
+                    if (dob[i] < '0' || dob[i] > '9') {
+                        valid_date = 0;
+                        break;
+                    }
+                }
+            }
+            
+            if (!valid_date) {
+                printf("%s%s Line %d: Invalid date format (expected YYYY-MM-DD)%s\n", 
+                       COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                printf("  Date: %s\n", dob);
+                error_count++;
+                increment_error_count();
+                continue;
+            }
+            
+            // Check 8: Validate date ranges
+            int year, month, day;
+            if (sscanf(dob, "%d-%d-%d", &year, &month, &day) == 3) {
+                if (year < 1900 || year > 2100) {
+                    printf("%s%s Line %d: Invalid year (1900-2100)%s\n", 
+                           COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                    error_count++;
+                    increment_error_count();
+                    continue;
+                }
+                if (month < 1 || month > 12) {
+                    printf("%s%s Line %d: Invalid month (1-12)%s\n", 
+                           COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                    error_count++;
+                    increment_error_count();
+                    continue;
+                }
+                if (day < 1 || day > 31) {
+                    printf("%s%s Line %d: Invalid day (1-31)%s\n", 
+                           COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                    error_count++;
+                    increment_error_count();
+                    continue;
+                }
+            }
+        } else {
+            printf("%s%s Line %d: Missing date of birth%s\n", 
+                   COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+            error_count++;
+            increment_error_count();
+            continue;
+        }
+        
+        // Check 9: Check for extra fields (should be nothing left)
+        token = strtok(NULL, ",");
+        if (token != NULL) {
+            printf("%s%s Line %d: Extra fields detected (ignored)%s\n", 
+                   COLOR_YELLOW, ICON_WARNING, line_number, COLOR_RESET);
+        }
+        
+        // All checks passed - create student
         Student* new_student = malloc(sizeof(Student));
-        new_student -> first_name = strdup(first_name);
-        new_student -> last_name = strdup(last_name);
-        new_student -> date_of_birth = strdup(dob);
-        new_student -> status = strdup("pending");
-        new_student -> next = NULL;
-
+        if (new_student == NULL) {
+            printf("%s%s Line %d: Memory allocation failed%s\n", 
+                   COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+            error_count++;
+            increment_error_count();
+            continue;
+        }
+        
+        new_student->first_name = strdup(first_name);
+        new_student->last_name = strdup(last_name);
+        new_student->date_of_birth = strdup(dob);
+        new_student->status = strdup("pending");
+        new_student->next = NULL;
+        
         Save_student(db, list, new_student);
+        
+        // Success!
+        imported_count++;
+        increment_student_imported();
+        
+        // Show progress for large imports
+        if (line_number % 10 == 0) {
+            printf("\rProcessing line %d...", line_number);
+            fflush(stdout);
+        }
     }
-
+    
     fclose(file);
+    
+    // Print summary
+    printf("\n\n");
+    printf("╔══════════════════════════════════════════════════════════════╗\n");
+    printf("║                      IMPORT SUMMARY                          ║\n");
+    printf("╠══════════════════════════════════════════════════════════════╣\n");
+    printf("║  Total lines processed:                                 %5d║\n", line_number);
+    printf("║  Successfully imported:                                 %5d║\n", imported_count);
+    printf("║  Errors encountered:                                    %5d║\n", error_count);
+    printf("║  Success rate:                                         %5.1f%%║\n", 
+           line_number > 0 ? (imported_count * 100.0) / line_number : 0.0);
+    printf("╚══════════════════════════════════════════════════════════════╝\n");
+    
+    if (imported_count > 0) {
+        printf("%s%s Import completed successfully!%s\n", COLOR_GREEN, ICON_SUCCESS, COLOR_RESET);
+    } else if (error_count > 0) {
+        printf("%s%s Import failed - all lines had errors%s\n", COLOR_RED, ICON_ERROR, COLOR_RESET);
+    } else {
+        printf("%s%s No data found in file%s\n", COLOR_YELLOW, ICON_WARNING, COLOR_RESET);
+    }
 }
+
+//Export to CSV function to be added later
 
 int Insert_student_list(Student_List* list, Student* student) {
 
