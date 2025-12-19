@@ -69,6 +69,7 @@ void printStudent(Student_List* list, int id);
 void printStudentList(Student_List* list, Major_List* major_list, char* major_id);
 void freeList(Student_List* list);
 void importFromCSV(sqlite3 *db, Student_List* list, const char* filename);
+void exportToCSV(sqlite3 *db, Student_List* list, const char* filename);
 ///////////////////////////////END OF STUDENT FUNCTIONS/////////////////////////////////////
 
 

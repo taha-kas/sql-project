@@ -18,11 +18,10 @@ int db_connect(sqlite3 **db, char* db_name){
 int CreateStudentTable(sqlite3 *db){
 char* sql = "CREATE TABLE IF NOT EXISTS student ("
       "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-      "first_name TEXT NOT NULL, "
-      "last_name TEXT NOT NULL, "
+      "first_name TEXT NOT NULL, ""last_name TEXT NOT NULL, "
       "date_of_birth TEXT NOT NULL, "
-      "status TEXT NOT NULL,"
-      "major_id TEXT);";
+      "major_id TEXT, "
+      "status TEXT NOT NULL);";
 
 
 int rc = sqlite3_exec(db, sql, NULL, NULL, NULL);

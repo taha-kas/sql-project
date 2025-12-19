@@ -6,6 +6,33 @@
 #include "ui_helpers.h"
 
 
+//#define _GNU_SOURCE didn't work, so instead i'll be defining my own strsep function
+char *strsep(char **stringp, const char *delim)
+{
+    char *start = *stringp;
+    char *p;
+
+    if (start == NULL)
+        return NULL;
+
+    p = start;
+    while (*p) {
+        const char *d = delim;
+        while (*d) {
+            if (*p == *d) {
+                *p = '\0';
+                *stringp = p + 1;
+                return start;
+            }
+            d++;
+        }
+        p++;
+    }
+
+    *stringp = NULL;
+    return start;
+}
+
 
 Student_List* CreateList(){
     Student_List* temp = malloc(sizeof(Student_List)); 
@@ -122,148 +149,71 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
         char* first_name = NULL;
         char* last_name = NULL;
         char* dob = NULL;
-        
-        // Parse first field
-        char* token = strtok(line, ",");
+
+        char *ptr = line;
+
+        /* First field */
+        char* token = strsep(&ptr, ",");
         if (token != NULL) {
             first_name = token;
-            
-            // Check 2: First name not empty
             if (strlen(first_name) == 0) {
-                printf("%s%s Line %d: First name cannot be empty%s\n", 
-                       COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                printf("%s%s Line %d: First name cannot be empty%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
                 error_count++;
                 increment_error_count();
                 continue;
             }
-            
-            // Check 3: First name length
-            if (strlen(first_name) > 50) {
-                printf("%s%s Line %d: First name too long (truncated)%s\n", 
-                       COLOR_YELLOW, ICON_WARNING, line_number, COLOR_RESET);
-                first_name[50] = '\0'; 
-            }
-        } else {
-            printf("%s%s Line %d: Missing first name%s\n", 
-                   COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+        } 
+        else {
+            printf("%s%s Line %d: Missing first name%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
             error_count++;
             increment_error_count();
             continue;
         }
-        
-        // Parse second field
-        token = strtok(NULL, ",");
+        /* Second field */
+        token = strsep(&ptr, ",");
         if (token != NULL) {
             last_name = token;
-            
-            // Check 4: Last name not empty
             if (strlen(last_name) == 0) {
-                printf("%s%s Line %d: Last name cannot be empty%s\n", 
-                       COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                printf("%s%s Line %d: Last name cannot be empty%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
                 error_count++;
                 increment_error_count();
                 continue;
             }
-            
-            // Check 5: Last name length
-            if (strlen(last_name) > 50) {
-                printf("%s%s Line %d: Last name too long (truncated)%s\n", 
-                       COLOR_YELLOW, ICON_WARNING, line_number, COLOR_RESET);
-                last_name[50] = '\0'; 
-            }
-        } else {
-            printf("%s%s Line %d: Missing last name%s\n", 
-                   COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+        } 
+        else {
+            printf("%s%s Line %d: Missing last name%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
             error_count++;
             increment_error_count();
             continue;
         }
-        
-        // Parse third field
-        token = strtok(NULL, ",");
+        /* Third field */
+        token = strsep(&ptr, ",");
         if (token != NULL) {
             dob = token;
-            
-            // Check 6: Date of birth not empty
             if (strlen(dob) == 0) {
-                printf("%s%s Line %d: Date of birth cannot be empty%s\n", 
-                       COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                printf("%s%s Line %d: Date of birth cannot be empty%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
                 error_count++;
                 increment_error_count();
                 continue;
             }
-            
-            // Check 7: Validate date format (basic)
-            int valid_date = 1;
-            if (strlen(dob) != 10) {
-                valid_date = 0;
-            } else if (dob[4] != '-' || dob[7] != '-') {
-                valid_date = 0;
-            } else {
-                // Check if year, month, day positions are digits
-                for (int i = 0; i < 10; i++) {
-                    if (i == 4 || i == 7) continue; // Skip hyphens
-                    if (dob[i] < '0' || dob[i] > '9') {
-                        valid_date = 0;
-                        break;
-                    }
-                }
-            }
-            
-            if (!valid_date) {
-                printf("%s%s Line %d: Invalid date format (expected YYYY-MM-DD)%s\n", 
-                       COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
-                printf("  Date: %s\n", dob);
-                error_count++;
-                increment_error_count();
-                continue;
-            }
-            
-            // Check 8: Validate date ranges
-            int year, month, day;
-            if (sscanf(dob, "%d-%d-%d", &year, &month, &day) == 3) {
-                if (year < 1900 || year > 2100) {
-                    printf("%s%s Line %d: Invalid year (1900-2100)%s\n", 
-                           COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
-                    error_count++;
-                    increment_error_count();
-                    continue;
-                }
-                if (month < 1 || month > 12) {
-                    printf("%s%s Line %d: Invalid month (1-12)%s\n", 
-                           COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
-                    error_count++;
-                    increment_error_count();
-                    continue;
-                }
-                if (day < 1 || day > 31) {
-                    printf("%s%s Line %d: Invalid day (1-31)%s\n", 
-                           COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
-                    error_count++;
-                    increment_error_count();
-                    continue;
-                }
-            }
-        } else {
-            printf("%s%s Line %d: Missing date of birth%s\n", 
-                   COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+        } 
+        else {
+            printf("%s%s Line %d: Missing date of birth%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
             error_count++;
             increment_error_count();
             continue;
         }
-        
-        // Check 9: Check for extra fields (should be nothing left)
-        token = strtok(NULL, ",");
+
+        /* Extra fields */
+        token = strsep(&ptr, ",");
         if (token != NULL) {
-            printf("%s%s Line %d: Extra fields detected (ignored)%s\n", 
-                   COLOR_YELLOW, ICON_WARNING, line_number, COLOR_RESET);
+            printf("%s%s Line %d: Extra fields detected (ignored)%s\n", COLOR_YELLOW, ICON_WARNING, line_number, COLOR_RESET);
         }
         
         // All checks passed - create student
         Student* new_student = malloc(sizeof(Student));
         if (new_student == NULL) {
-            printf("%s%s Line %d: Memory allocation failed%s\n", 
-                   COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+            printf("%s%s Line %d: Memory allocation failed%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
             error_count++;
             increment_error_count();
             continue;
@@ -312,6 +262,23 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
 }
 
 //Export to CSV function to be added later
+void exportToCSV(sqlite3 *db, Student_List* list, const char* filename) {
+    FILE* file = fopen(filename, "w");
+    if (file == NULL) {
+        print_error("Could not open file for writing\n");
+        printf("File: %s\n", filename);
+        increment_error_count();
+        return;
+    }
+
+    Student* temp = list -> head;
+    while(temp != NULL){
+        fprintf(file, "%s,%s,%s\n", temp -> first_name, temp -> last_name, temp -> date_of_birth);
+        temp = temp -> next; 
+    }
+    fclose(file);
+    print_success("Students exported successfully to CSV file");
+}
 
 int Insert_student_list(Student_List* list, Student* student) {
 
@@ -448,6 +415,7 @@ int updateStudent(sqlite3 *db, Student_List* list, int id){
     printf("First Name: %s\n", temp -> first_name);
     printf("Last Name: %s\n", temp -> last_name);
     printf("Date of Birth: %s\n", temp -> date_of_birth);
+    printf("Major ID: %s\n", temp -> major_id); 
     printf("Status: %s\n", temp -> status);
 
     printf("What fields do you want to update?\n");

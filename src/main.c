@@ -38,13 +38,14 @@ void StudentManagementMenu(){
     printf("\n%sAvailable Actions:%s\n\n", COLOR_WHITE, COLOR_RESET);
     printf("%s[1]%s Add New Student\n", COLOR_CYAN, COLOR_RESET);
     printf("%s[2]%s Import Students from CSV\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[3]%s Remove Student\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[4]%s Update Student Information\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[5]%s View Student Details\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[6]%s View All Students\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[7]%s Return to Admin Menu\n", COLOR_CYAN, COLOR_RESET);
+    printf("%s[3]%s Export Students to CSV\n", COLOR_CYAN, COLOR_RESET);
+    printf("%s[4]%s Remove Student\n", COLOR_CYAN, COLOR_RESET);
+    printf("%s[5]%s Update Student Information\n", COLOR_CYAN, COLOR_RESET);
+    printf("%s[6]%s View Student Details\n", COLOR_CYAN, COLOR_RESET);
+    printf("%s[7]%s View All Students\n", COLOR_CYAN, COLOR_RESET);
+    printf("%s[8]%s Return to Admin Menu\n", COLOR_CYAN, COLOR_RESET);
     
-    printf("\n%s» Select action (1-7):%s ", COLOR_YELLOW, COLOR_RESET);
+    printf("\n%s» Select action (1-8):%s ", COLOR_YELLOW, COLOR_RESET);
 }
 
 void CourseManagementMenu(){
@@ -106,14 +107,19 @@ int main() {
     sqlite3 *test;
     char *err_msg = 0;
 
-    //Delete all existing data in the database for testing purposes
-    sqlite3_exec(test, "DELETE FROM students;", NULL, NULL, &err_msg);
-    sqlite3_exec(test, "DELETE FROM majors;", NULL, NULL, &err_msg);
-    sqlite3_exec(test, "DELETE FROM courses;", NULL, NULL, &err_msg);
     
     print_info("Initializing database...");
     Sleep(500);
     db_connect(&test, "test.db");
+
+    //Delete all existing data in the database for testing purposes
+    sqlite3_exec(test, "DROP TABLE IF EXISTS student;", NULL, NULL, &err_msg);
+    sqlite3_exec(test, "DELETE FROM major;", NULL, NULL, &err_msg);
+    sqlite3_exec(test, "DELETE FROM course;", NULL, NULL, &err_msg);
+
+    CreateStudentTable(test);
+    CreateMajorTable(test); 
+    CreateCourseTable(test);
     
     // Load data structures
     print_info("Loading student records...");
@@ -160,7 +166,7 @@ int main() {
             }
             
             print_success("Access granted. Welcome, Admin!");
-            Sleep(1000);
+            Sleep(1500);
             
             int admin_exit = 0;
             
@@ -178,7 +184,7 @@ int main() {
                     while (!student_management_exit) {
                         StudentManagementMenu();
                         
-                        int student_choice = get_numeric_input("", 1, 7);
+                        int student_choice = get_numeric_input("", 1, 8);
                         if (student_choice == -1) continue;
                         
                         increment_command_count();
@@ -223,6 +229,32 @@ int main() {
                             getchar();
                         }
                         else if(student_choice == 3){
+                            print_banner("Export Students to CSV", COLOR_GREEN);
+                            printf("\n");
+                            
+                            char filename[100];
+                            printf("%s» Enter CSV filename to export to:%s ", COLOR_YELLOW, COLOR_RESET);
+                            fgets(filename, sizeof(filename), stdin);
+                            filename[strcspn(filename, "\n")] = '\0';
+                            
+                            print_info("Exporting students...");
+                            
+                            // Simulate progress bar for CSV export
+                            printf("\n");
+                            for (int i = 0; i <= 100; i += 5) {
+                                display_progress_bar(i, 100, 50);
+                                Sleep(50); // Simulate processing time
+                            }
+                            printf("\n");
+                            
+                            exportToCSV(test, StudentList, filename);
+                            
+                            print_success("Students exported successfully!");
+                            
+                            printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
+                            getchar();
+                        }
+                        else if(student_choice == 4){
                             print_banner("Remove Student", COLOR_RED);
                             printf("\n");
                             
@@ -240,7 +272,7 @@ int main() {
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
                         }
-                        else if(student_choice == 4){
+                        else if(student_choice == 5){
                             print_banner("Update Student", COLOR_YELLOW);
                             printf("\n");
                             
@@ -258,7 +290,7 @@ int main() {
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
                         }
-                        else if(student_choice == 5){
+                        else if(student_choice == 6){
                             print_banner("View Student Details", COLOR_CYAN);
                             printf("\n");
                             
@@ -275,7 +307,7 @@ int main() {
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
                         }
-                        else if(student_choice == 6){
+                        else if(student_choice == 7){
                             print_banner("All Students", COLOR_CYAN);
                             printf("\n");
                             
@@ -287,7 +319,7 @@ int main() {
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
                         }
-                        else if(student_choice == 7){
+                        else if(student_choice == 8){
                             print_info("Returning to Admin Menu...");
                             Sleep(1000);
                             student_management_exit = 1;
