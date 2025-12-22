@@ -6,77 +6,80 @@
 #include "database.h"
 #include "ui_helpers.h"
 
+
+////////////////////////////////////////ADMIN SECTION MENUS/////////////////////////////////////////
 void MainMenu(){
     printf("%s", CLEAR_SCREEN);
     print_banner("Student Management System", COLOR_MAGENTA);
     
-    printf("\n%sSelect your role:%s\n\n", COLOR_WHITE, COLOR_RESET);
-    printf("%s[1]%s Admin\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[2]%s Student\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[3]%s Exit\n", COLOR_CYAN, COLOR_RESET);
+    printf("\nSelect your role:\n\n");
+    print_info("[1] Admin\n");
+    print_info("[2] Student\n");
+    print_info("[3] Exit\n");
     
-    printf("\n%s» Enter your choice (1-3):%s ", COLOR_YELLOW, COLOR_RESET);
+    print_warning("» Enter your choice (1-3): ");
 }
 
 void AdminFunctionMenu(){
     printf("%s", CLEAR_SCREEN);
     print_banner("Admin Dashboard", COLOR_BLUE);
     
-    printf("\n%sAvailable Operations:%s\n\n", COLOR_WHITE, COLOR_RESET);
-    printf("%s[1]%s Manage Students\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[2]%s Manage Courses\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[3]%s Manage Majors\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[4]%s Return to Main Menu\n", COLOR_CYAN, COLOR_RESET);
+    printf("\nAvailable Operations:\n\n");
+    print_info("[1] Manage Students\n");
+    print_info("[2] Manage Courses\n");
+    print_info("[3] Manage Majors\n");
+    print_info("[4] Return to Main Menu\n");
     
-    printf("\n%s» Select operation (1-4):%s ", COLOR_YELLOW, COLOR_RESET);
+    print_warning("» Select operation (1-4): ");
 }
 
 void StudentManagementMenu(){
     printf("%s", CLEAR_SCREEN);
     print_banner("Student Management", COLOR_GREEN);
     
-    printf("\n%sAvailable Actions:%s\n\n", COLOR_WHITE, COLOR_RESET);
-    printf("%s[1]%s Add New Student\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[2]%s Import Students from CSV\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[3]%s Export Students to CSV\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[4]%s Remove Student\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[5]%s Update Student Information\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[6]%s View Student Details\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[7]%s View All Students\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[8]%s Return to Admin Menu\n", COLOR_CYAN, COLOR_RESET);
+    printf("\nAvailable Actions:\n\n");
+    print_info("[1] Add New Student\n");
+    print_info("[2] Import Students from CSV\n");
+    print_info("[3] Export Students to CSV\n");
+    print_info("[4] Remove Student\n");
+    print_info("[5] Update Student Information\n");
+    print_info("[6] View Student Details\n");
+    print_info("[7] View All Students\n");
+    print_info("[8] Return to Admin Menu\n");
     
-    printf("\n%s» Select action (1-8):%s ", COLOR_YELLOW, COLOR_RESET);
+    print_warning("» Select action (1-8): ");
 }
 
 void CourseManagementMenu(){
     printf("%s", CLEAR_SCREEN);
     print_banner("Course Management", COLOR_BLUE);
     
-    printf("\n%sAvailable Actions:%s\n\n", COLOR_WHITE, COLOR_RESET);
-    printf("%s[1]%s Add New Course\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[2]%s Remove Course\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[3]%s Update Course\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[4]%s Add Course to Major\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[5]%s View All Courses\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[6]%s Return to Admin Menu\n", COLOR_CYAN, COLOR_RESET);
+    printf("\nAvailable Actions:\n\n");
+    print_info("[1] Add New Course\n");
+    print_info("[2] Remove Course\n");
+    print_info("[3] Update Course\n");
+    print_info("[4] Add Course to Major\n");
+    print_info("[5] View All Courses\n");
+    print_info("[6] Return to Admin Menu\n");
     
-    printf("\n%s» Select action (1-6):%s ", COLOR_YELLOW, COLOR_RESET);
+    print_warning("» Select action (1-6): ");
 }
 
 void MajorManagementMenu(){
     printf("%s", CLEAR_SCREEN);
     print_banner("Major Management", COLOR_MAGENTA);
     
-    printf("\n%sAvailable Actions:%s\n\n", COLOR_WHITE, COLOR_RESET);
-    printf("%s[1]%s Add New Major\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[2]%s Remove Major\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[3]%s Update Major\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[4]%s View All Majors\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[5]%s View Courses in Major\n", COLOR_CYAN, COLOR_RESET);
-    printf("%s[6]%s Return to Admin Menu\n", COLOR_CYAN, COLOR_RESET);
+    printf("\nAvailable Actions:\n\n");
+    print_info("[1] Add New Major\n");
+    print_info("[2] Remove Major\n");
+    print_info("[3] Update Major\n");
+    print_info("[4] View All Majors\n");
+    print_info("[5] View Courses in Major\n");
+    print_info("[6] Return to Admin Menu\n");
     
-    printf("\n%s» Select action (1-6):%s ", COLOR_YELLOW, COLOR_RESET);
+    print_warning("» Select action (1-6): ");
 }
+////////////////////////////////////////END OF ADMIN SECTION MENUS/////////////////////////////////////////
 
 //fonction pour activer le support unicode dans la console windows
 void enable_unicode_support(void) {
@@ -91,6 +94,23 @@ void enable_unicode_support(void) {
     wcscpy(font.FaceName, L"Consolas");  // Or "Lucida Console"
     SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &font);
 }
+
+////////////////////////////////////////STUDENT SECTION MENUS/////////////////////////////////////////
+void StudentMainMenu() {
+    printf("%s", CLEAR_SCREEN);
+    print_banner("Student Dashboard", COLOR_GREEN);
+
+    printf("\nAvailable Actions:\n\n");
+    print_info("[1] View Personal Information\n");
+    print_info("[2] Enroll for Current Academic Year\n");
+    print_info("[3] View Enrolled Courses\n");
+    print_info("[4] View Grades\n");
+    print_info("[5] Logout\n");
+
+    print_warning("» Select action (1-5): ");
+}
+////////////////////////////////////////END OF STUDENT SECTION MENUS/////////////////////////////////////////
+
 
 int main() {
 
@@ -153,21 +173,45 @@ int main() {
         increment_command_count();
         
         if(choice == 1){
-            printf("\n%s» Enter admin password:%s ", COLOR_YELLOW, COLOR_RESET);
             
             char password[50];
-            fgets(password, sizeof(password), stdin);
-            password[strcspn(password, "\n")] = '\0';
+            int attempts = 0;
+            int approved = 0;
             
-            if(strcmp(password, "admin123") != 0){
-                print_error("Access denied: Incorrect password");
-                Sleep(1500);
-                continue;
+            while (attempts < 3) {
+                system("cls");
+                print_banner("Admin Login", COLOR_BLUE);
+                
+                printf("\n%s» Enter admin password:%s ", COLOR_YELLOW, COLOR_RESET);
+                get_password(password, sizeof(password));
+    
+                if (strcmp(password, "admin123") == 0) {
+                    approved = 1;
+                    print_success("Access granted!");
+                    Sleep(1500);
+                    break;
+                }
+    
+                attempts++;
+                print_error("Wrong password! Try again.");
+
+    
+                if (attempts < 3) {
+                    printf("%sRemaining tries: %d%s\n", COLOR_YELLOW, 3 - attempts, COLOR_RESET);
+                    Sleep(2000);
+                }
+
+                else if(attempts >= 3){
+                    print_error("Maximum attempts reached. Returning to main menu.");
+                    Sleep(2000);
+                    MainMenu();
+                }
             }
-            
-            print_success("Access granted. Welcome, Admin!");
-            Sleep(1500);
-            
+
+            if (!approved) {
+                continue;  
+            }
+
             int admin_exit = 0;
             
             while (!admin_exit) {
@@ -548,12 +592,84 @@ int main() {
                 }
             }
         }
-        else if(choice == 2){
-            print_banner("Student Portal", COLOR_GREEN);
-            printf("\n%sStudent functionalities are coming soon!%s\n", COLOR_YELLOW, COLOR_RESET);
-            printf("%sPress Enter to return to main menu...%s", COLOR_YELLOW, COLOR_RESET);
-            getchar();
-        }
+    
+    else if(choice == 2){
+
+    //     int student_id;
+    //     print_warning("\n» Enter your Student ID: ");
+    //     scanf("%d", &student_id);
+    //     clear_input_buffer();
+
+    //     // Check if student exists
+    //     Student* current_student = findStudentById(StudentList, student_id);//To be added later (would be better if findStudentById retunrs 0 or 1)
+    //     if(current_student == NULL){
+    //         print_error("Student ID not found.");
+    //         Sleep(1500);
+    //         continue;
+    //     }
+
+    //     print_success("Login successful!");
+    //     Sleep(1000);
+
+    //     int student_exit = 0;
+
+    //     while(!student_exit){
+    //         StudentMainMenu();
+
+    //         int student_choice = get_numeric_input("", 1, 5);
+    //         if (student_choice == -1) continue;
+
+    //         increment_command_count();
+
+    //         if(student_choice == 1){
+    //             /******** VIEW PERSONAL INFO ********/
+    //             print_banner("Personal Information", COLOR_CYAN);
+    //             printStudent(StudentList, student_id);
+
+    //             print_warning("\nPress Enter to continue...");
+    //             getchar();
+    //         }
+    //         else if(student_choice == 2){
+    //             /******** ENROLLMENT ********/
+    //             print_banner("Academic Enrollment", COLOR_GREEN);
+
+    //             if(is_student_enrolled(test, student_id)){
+    //                 print_warning("You are already enrolled for this academic year.");
+    //             } 
+    // //First check if the student is accepted in the university or not. (The database should store the student info once they're accepted, fill the rest later when they select what major they want to pursue)
+    //             else {
+    //                 enroll_student(test, student_id);
+    //                 print_success("Enrollment completed successfully!");
+    //             }
+
+    //             print_warning("\nPress Enter to continue...");
+    //             getchar();
+    //         }
+    //         else if(student_choice == 3){
+    //             /******** VIEW COURSES ********/
+    //             print_banner("Enrolled Courses", COLOR_BLUE);
+    //             print_courses_for_student(test, student_id);
+
+    //             print_warning("\nPress Enter to continue...");
+    //             getchar();
+    //         }
+    //         else if(student_choice == 4){
+    //             /******** VIEW GRADES ********/
+    //             print_banner("Grades & Results", COLOR_MAGENTA);
+    //             print_student_grades(test, student_id);
+
+    //             print_warning("\nPress Enter to continue...");
+    //             getchar();
+    //         }
+    //         else if(student_choice == 5){
+    //             print_info("Logging out...");
+    //             Sleep(1000);
+    //             student_exit = 1;
+    //         }
+    //     }
+}
+//////////////////////////////////////// END OF STUDENT PORTAL /////////////////////////////////////
+
         else if(choice == 3){
             printf("\n%sExiting program...%s\n", COLOR_YELLOW, COLOR_RESET);
             Sleep(1000);
@@ -563,6 +679,7 @@ int main() {
     
     // Cleanup and show session summary
     print_info("Closing database connection...");
+    Sleep(500);
     sqlite3_close(test);
     
     print_session_summary();

@@ -65,5 +65,6 @@ void print_session_summary(void);
 void show_command_suggestions(const char* partial);
 void clear_input_buffer(void);
 int get_numeric_input(const char* prompt, int min, int max);
+void get_password(char *password, int max_len);
 
 #endif

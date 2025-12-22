@@ -233,7 +233,7 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
         
         // Show progress for large imports
         if (line_number % 10 == 0) {
-            printf("\rProcessing line %d...", line_number);
+            printf("%s→Processing line %d...\n%s", COLOR_YELLOW, line_number, COLOR_RESET); //to show the user that progress is being made
             fflush(stdout);
         }
     }
@@ -273,7 +273,7 @@ void exportToCSV(sqlite3 *db, Student_List* list, const char* filename) {
 
     Student* temp = list -> head;
     while(temp != NULL){
-        fprintf(file, "%s,%s,%s\n", temp -> first_name, temp -> last_name, temp -> date_of_birth);
+        fprintf(file, "%s,%s,%s,%s\n", temp -> first_name, temp -> last_name, temp -> date_of_birth, temp -> major_id);
         temp = temp -> next; 
     }
     fclose(file);
@@ -419,51 +419,47 @@ int updateStudent(sqlite3 *db, Student_List* list, int id){
     printf("Status: %s\n", temp -> status);
 
     printf("What fields do you want to update?\n");
+    printf("[1] First Name\n[2] Last Name\n[3] Date of Birth\n[4] Major ID\n[5] Status\n");
 
-    printf("1. First Name (y/n)\n");
     char choice[10];
     fgets(choice, sizeof(choice), stdin);
     choice[strcspn(choice, "\n")] = 0;
 
-    if(choice[0] == 'y' || choice[0] == 'Y'){
-        char new_first_name[50];
+    if(strcmp(choice, "1") == 0){
         printf("Enter new First Name: ");
+        char new_first_name[50];
         fgets(new_first_name, sizeof(new_first_name), stdin);
         new_first_name[strcspn(new_first_name, "\n")] = 0;
         free(temp -> first_name);
         temp -> first_name = strdup(new_first_name);
     }
-
-    printf("2. Last Name (y/n)\n");
-    fgets(choice, sizeof(choice), stdin);
-    choice[strcspn(choice, "\n")] = 0;
-    if(choice[0] == 'y' || choice[0] == 'Y'){
-        char new_last_name[50];
+    else if(strcmp(choice, "2") == 0){
         printf("Enter new Last Name: ");
+        char new_last_name[50];
         fgets(new_last_name, sizeof(new_last_name), stdin);
         new_last_name[strcspn(new_last_name, "\n")] = 0;
         free(temp -> last_name);
         temp -> last_name = strdup(new_last_name);
     }
-    
-    printf("3. Date of Birth (y/n)\n");
-    fgets(choice, sizeof(choice), stdin);
-    choice[strcspn(choice, "\n")] = 0;
-    if(choice[0] == 'y' || choice[0] == 'Y'){
-        char new_dob[11];
+    else if(strcmp(choice, "3") == 0){
         printf("Enter new Date of Birth (YYYY-MM-DD): ");
+        char new_dob[11];
         fgets(new_dob, sizeof(new_dob), stdin);
         new_dob[strcspn(new_dob, "\n")] = 0;
         free(temp -> date_of_birth);
         temp -> date_of_birth = strdup(new_dob);
     }
-
-    printf("4. Status (y/n)\n");
-    fgets(choice, sizeof(choice), stdin);
-    choice[strcspn(choice, "\n")] = 0;
-    if(choice[0] == 'y' || choice[0] == 'Y'){
+    else if(strcmp(choice, "4") == 0){
+        printf("Enter new Major ID: ");
+        char new_major_id[20];
+        fgets(new_major_id, sizeof(new_major_id), stdin);
+        new_major_id[strcspn(new_major_id, "\n")] = 0;
+        free(temp -> major_id);
+        temp -> major_id = strdup(new_major_id);
+    }
+    else if(strcmp(choice, "5") == 0){
+        printf("Enter new Status (pending/active/graduated/dropped): ");
         char new_status[20];
-        printf("Enter new Status: ");
         fgets(new_status, sizeof(new_status), stdin);
         new_status[strcspn(new_status, "\n")] = 0;
         while(strcmp(new_status, "pending") != 0 && strcmp(new_status, "active") != 0 && strcmp(new_status, "graduated") != 0 && strcmp(new_status, "dropped") != 0){

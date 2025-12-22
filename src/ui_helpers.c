@@ -1,33 +1,35 @@
 #include "ui_helpers.h"
 #include <stdlib.h>
 #include <windows.h>
+#include <conio.h>
 
 // Global session statistics
 static SessionStats session = {0};
 
 // Colored output functions
 void print_colored(const char* text, const char* color) {
-    printf("%s%s%s", color, text, COLOR_RESET);
+    printf("\n%s%s%s", color, text, COLOR_RESET);
 }
 
 void print_success(const char* message) {
-    printf("%s%s %s%s\n", COLOR_GREEN, ICON_SUCCESS, message, COLOR_RESET);
+    printf("\n%s%s %s%s\n", COLOR_GREEN, ICON_SUCCESS, message, COLOR_RESET);
 }
 
 void print_error(const char* message) {
-    printf("%s%s %s%s\n", COLOR_RED, ICON_ERROR, message, COLOR_RESET);
+    printf("\n%s%s %s%s\n", COLOR_RED, ICON_ERROR, message, COLOR_RESET);
 }
 
 void print_info(const char* message) {
-    printf("%s%s %s%s\n", COLOR_CYAN, ICON_INFO, message, COLOR_RESET);
+    printf("\n%s%s %s%s\n", COLOR_CYAN, ICON_INFO, message, COLOR_RESET);
 }
 
 void print_warning(const char* message) {
-    printf("%s%s %s%s\n", COLOR_YELLOW, ICON_WARNING, message, COLOR_RESET);
+    printf("\n%s%s %s%s\n", COLOR_YELLOW, ICON_WARNING, message, COLOR_RESET);
 }
 
 void print_banner(const char* text, const char* color) {
     printf("\n\n");
+    system("cls");
     int len = strlen(text);
     int padding = (60 - len) / 2;
     
@@ -87,7 +89,7 @@ void print_welcome_banner(void) {
     printf("\n%s", COLOR_BLUE);
     printf("╔══════════════════════════════════════════════════════════════╗\n");
     printf("║                                                              ║\n");
-    printf("║           STUDENT MANAGEMENT SYSTEM v2.0                     ║\n");
+    printf("║                STUDENT MANAGEMENT SYSTEM                     ║\n");
     printf("║                                                              ║\n");
     printf("╚══════════════════════════════════════════════════════════════╝\n");
     printf("%s", COLOR_RESET);
@@ -208,5 +210,40 @@ int get_numeric_input(const char* prompt, int min, int max) {
         
         print_error("Invalid input. Please try again.");
         printf("Enter a number between %d and %d: ", min, max);
+    }
+}
+
+void get_password(char *password, int max_len){
+    int i = 0;
+    char ch;
+
+    while (1) {
+        ch = _getch();  
+
+        // handling enter key (we also treat \r because some compilers understand the enter button as that)
+        if (ch == '\r' || ch == '\n') {
+            password[i] = '\0';
+            printf("\n");
+            break;
+        }
+         
+        // handling backspaces 
+        else if (ch == '\b' && i > 0) {
+            i--;
+            printf("\b \b"); 
+        }
+        
+        // handling characters (ASCII code)
+        else if (ch >= 32 && ch <= 126 && i < max_len - 1) {
+            password[i++] = ch;
+            printf("*");
+        }
+
+        // handling exceeding the characters limit
+        else if(i >= max_len - 1){
+            printf("\a"); 
+            fflush(stdout);
+            print_warning("Maximum number of characters exceeded...");
+        }
     }
 }
