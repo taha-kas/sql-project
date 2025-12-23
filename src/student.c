@@ -11,10 +11,10 @@ char *strsep(char **stringp, const char *delim)
 {
     char *start = *stringp;
     char *p;
-
+    
     if (start == NULL)
-        return NULL;
-
+    return NULL;
+    
     p = start;
     while (*p) {
         const char *d = delim;
@@ -28,7 +28,7 @@ char *strsep(char **stringp, const char *delim)
         }
         p++;
     }
-
+    
     *stringp = NULL;
     return start;
 }
@@ -36,67 +36,131 @@ char *strsep(char **stringp, const char *delim)
 
 Student_List* CreateList(){
     Student_List* temp = malloc(sizeof(Student_List)); 
-
+    
     if(temp == NULL){
         printf("Error: Could not allocate memory\n"); 
         return NULL; 
     }
-
+    
     temp -> head = NULL; 
     temp -> num_of_students = 0; 
-
+    
     return temp; 
 }
 
 Student* CreateNode(){
-
+    
     //Get First Name:
     printf("Enter First Name: ");
     char first_name[50];
     fgets(first_name, sizeof(first_name), stdin); 
     first_name[strcspn(first_name, "\n")] = '\0'; 
-
+    
     //Get Last Name:
     printf("Enter Last Name: ");
     char last_name[50];
     fgets(last_name, sizeof(last_name), stdin); 
     last_name[strcspn(last_name, "\n")] = '\0'; 
-
+    
     //Get Date of Birth:
     printf("Enter Date of Birth (YYYY-MM-DD): "); 
     char dob[12];
     fgets(dob, sizeof(dob), stdin);
     dob[strcspn(dob, "\n")] = '\0';
 
+    //Get Phone Number:
+    printf("Enter Phone Number: ");
+    char phone_number[20];
+    fgets(phone_number, sizeof(phone_number), stdin);
+    phone_number[strcspn(phone_number, "\n")] = '\0';
+
+    //Get Email:
+    printf("Enter Email: ");
+    char email[50];
+    fgets(email, sizeof(email), stdin);
+    email[strcspn(email, "\n")] = '\0';
+
+    //Get Address:
+    printf("Enter Address: ");
+    char address[100];
+    fgets(address, sizeof(address), stdin);
+    address[strcspn(address, "\n")] = '\0';
+    
     // //Get Status:
     // printf("Enter Status (pending/active/graduated/dropped): ");
     // char status[20]; 
     // fgets(status, sizeof(status), stdin); 
     // status[strcspn(status, "\n")] = '\0'; 
-
+    
     // //Check for valid status:
     // while(strcmp(status, "pending") != 0 && strcmp(status, "active") != 0 && strcmp(status, "graduated") != 0 && strcmp(status, "dropped") != 0){
-    //     printf("Invalid status. Please enter one of the following: pending, active, graduated, dropped\n");
-    //     fgets(status, sizeof(status), stdin);
-    //     status[strcspn(status, "\n")] = '\0'; 
-    // }
-
-    Student* temp = malloc(sizeof(Student)); 
-
-    if(temp == NULL){
-        printf("Error: Could not allocate memory. Failed to create student.\n"); 
-        return NULL; 
-    }
-
-    temp -> id = 0; 
-    temp -> first_name = strdup(first_name);
-    temp -> last_name = strdup(last_name);
-    temp -> date_of_birth = strdup(dob);
-    temp -> status = strdup("pending");
-    temp -> next = NULL;
-
+        //     printf("Invalid status. Please enter one of the following: pending, active, graduated, dropped\n");
+        //     fgets(status, sizeof(status), stdin);
+        //     status[strcspn(status, "\n")] = '\0'; 
+        // }
+        
+        Student* temp = malloc(sizeof(Student)); 
+        
+        if(temp == NULL){
+            printf("Error: Could not allocate memory. Failed to create student.\n"); 
+            return NULL; 
+        }
+        
+        temp -> id = 0; 
+        temp -> first_name = strdup(first_name);
+        temp -> last_name = strdup(last_name);
+        temp -> date_of_birth = strdup(dob);
+        temp -> phone_number = strdup(phone_number);
+        temp -> email = strdup(email);
+        temp -> address = strdup(address);
+        temp -> major_id = strdup("");
+        temp -> status = strdup("pending");
+        temp -> next = NULL;
+        
 
     return temp;
+}
+
+int Insert_student_list(Student_List* list, Student* student) {
+
+    if(list == NULL || student == NULL) {
+        printf("Error: List or student is NULL\n");
+        return 0; 
+    }
+
+    else if(list -> head == NULL){
+        list -> head = student;
+        list -> num_of_students++;
+        printf("Student with ID %d added successfully.\n", student -> id);
+        return 1; 
+    }
+
+    Student* temp = list -> head; 
+    while(temp -> next != NULL){
+        temp = temp -> next; 
+    }
+    temp -> next = student;
+    list -> num_of_students++;
+
+    return 1;
+}
+
+int Save_student(sqlite3 *db, Student_List* list, Student* student){
+
+    if(!db_insert_student(db, student)){
+        printf("Error: Could not insert student into database\n");
+        return 0; 
+    }
+
+    if(!Insert_student_list(list, student)){
+        printf("Error: Could not insert student into list\n");
+        db_remove_student(db, student->id);
+        return 0;
+    }
+
+    printf("Student with ID %d saved successfully.\n", student -> id);
+
+    return 1;
 }
 
 void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
@@ -135,9 +199,9 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
             if (line[i] == ',') comma_count++;
         }
         
-        // Expected: 2 commas for 3 fields (first_name,last_name,dob)
-        if (comma_count != 2) {
-            printf("%s%s Line %d: Invalid format - expected 3 fields, found %d%s\n", 
+        // Expected: 5 commas for 6 fields (first_name,last_name,dob,phone_number,email,address)
+        if (comma_count != 5) {
+            printf("%s%s Line %d: Invalid format - expected 6 fields, found %d%s\n", 
                    COLOR_RED, ICON_ERROR, line_number, comma_count + 1, COLOR_RESET);
             printf("  Line: %s\n", line);
             error_count++;
@@ -149,6 +213,9 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
         char* first_name = NULL;
         char* last_name = NULL;
         char* dob = NULL;
+        char* phone_number = NULL;
+        char* email = NULL;
+        char* address = NULL;
 
         char *ptr = line;
 
@@ -203,12 +270,85 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
             increment_error_count();
             continue;
         }
-
-        /* Extra fields */
+        /* Fourth field */
         token = strsep(&ptr, ",");
         if (token != NULL) {
-            printf("%s%s Line %d: Extra fields detected (ignored)%s\n", COLOR_YELLOW, ICON_WARNING, line_number, COLOR_RESET);
+            phone_number = token;
+            if (strlen(phone_number) == 0){
+                printf("%s%s Line %d: Phone number cannot be empty%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                error_count++;
+                increment_error_count();
+                continue; 
+            }
+            //Check phone number validity (basic check for digits and length)
+            if(strlen(phone_number) != 10){
+                printf("%s%s Line %d: Phone number must be 10 digits long%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                error_count++;
+                increment_error_count();
+                continue; 
+            }
+            int valid = 1;
+            for(int i = 0; phone_number[i] != '\0'; i++){
+                if(phone_number[i] < '0' || phone_number[i] > '9'){
+                    valid = 0; 
+                    break; 
+                }
+            }
+            if (!valid) {
+                printf("%s%s Line %d: Invalid phone number%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                error_count++;
+                increment_error_count();
+                continue;
+            }
+        } 
+        else {
+            printf("%s%s Line %d: Missing phone number%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+            error_count++;
+            increment_error_count();
+            continue;
         }
+        /* Fifth field */
+        token = strsep(&ptr, ",");
+        if (token != NULL) {
+            email = token;
+            if (strlen(email) == 0) {
+                printf("%s%s Line %d: Email cannot be empty%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                error_count++;
+                increment_error_count();
+                continue;
+            }
+        } 
+        else {
+            printf("%s%s Line %d: Missing email%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+            error_count++;
+            increment_error_count();
+            continue;
+        }
+        /* Sixth field */
+        token = strsep(&ptr, ",");
+        if (token != NULL) {
+            address = token;
+            if (strlen(address) == 0) {
+                printf("%s%s Line %d: Address cannot be empty%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+                error_count++;
+                increment_error_count();
+                continue;
+            }
+        } 
+        else {
+            printf("%s%s Line %d: Missing address%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+            error_count++;
+            increment_error_count();
+            continue;
+        }
+        /* Extra field */
+        if (ptr != NULL) {
+            printf("%s%s Line %d: Extra data found after expected fields%s\n", COLOR_RED, ICON_ERROR, line_number, COLOR_RESET);
+            error_count++;
+            increment_error_count();
+            continue;
+        }
+
         
         // All checks passed - create student
         Student* new_student = malloc(sizeof(Student));
@@ -222,6 +362,9 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
         new_student->first_name = strdup(first_name);
         new_student->last_name = strdup(last_name);
         new_student->date_of_birth = strdup(dob);
+        new_student->phone_number = strdup(phone_number);
+        new_student->email = strdup(email);
+        new_student->address = strdup(address);
         new_student->status = strdup("pending");
         new_student->next = NULL;
         
@@ -261,8 +404,14 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
     }
 }
 
-//Export to CSV function to be added later
-void exportToCSV(sqlite3 *db, Student_List* list, const char* filename) {
+void exportToCSV(Student_List* list, const char* filename) {
+
+    if(list == NULL || list -> head == NULL || filename == NULL) {
+        print_error("Invalid parameters for exportToCSV");
+        increment_error_count();
+        return;
+    }
+
     FILE* file = fopen(filename, "w");
     if (file == NULL) {
         print_error("Could not open file for writing\n");
@@ -273,66 +422,24 @@ void exportToCSV(sqlite3 *db, Student_List* list, const char* filename) {
 
     Student* temp = list -> head;
     while(temp != NULL){
-        fprintf(file, "%s,%s,%s,%s\n", temp -> first_name, temp -> last_name, temp -> date_of_birth, temp -> major_id);
+        fprintf(file, "%s,%s,%s,%s,%s,%s,%s\n", temp -> first_name, temp -> last_name, temp -> date_of_birth, temp -> major_id, temp -> phone_number, temp -> email, temp -> address);
         temp = temp -> next; 
     }
     fclose(file);
     print_success("Students exported successfully to CSV file");
 }
 
-int Insert_student_list(Student_List* list, Student* student) {
-
-    if(list == NULL || student == NULL) {
-        printf("Error: List or student is NULL\n");
-        return 0; 
-    }
-
-    else if(list -> head == NULL){
-        list -> head = student;
-        list -> num_of_students++;
-        printf("Student with ID %d added successfully.\n", student -> id);
-        return 1; 
-    }
-
-    Student* temp = list -> head; 
-    while(temp -> next != NULL){
-        temp = temp -> next; 
-    }
-    temp -> next = student;
-    list -> num_of_students++;
-
-    return 1;
-}
-
-
-int Save_student(sqlite3 *db, Student_List* list, Student* student){
-
-    if(!db_insert_student(db, student)){
-        printf("Error: Could not insert student into database\n");
-        return 0; 
-    }
-
-    if(!Insert_student_list(list, student)){
-        printf("Error: Could not insert student into list\n");
-        db_remove_student(db, student->id);
-        return 0;
-    }
-
-    printf("Student with ID %d saved successfully.\n", student -> id);
-
-    return 1;
-}
-
 void printStudent(Student_List* list, int id){
     Student* temp = list -> head;
     while(temp != NULL){
         if(temp -> id == id){
-            printf("Student Details:\n");
-            printf("ID: %d\n", temp -> id);
-            printf("First Name: %s\n", temp -> first_name);
-            printf("Last Name: %s\n", temp -> last_name);
-            printf("Date of Birth: %s\n", temp -> date_of_birth);
-            printf("Status: %s\n", temp -> status);
+            printf("%sStudent Details:%s\n", COLOR_GREEN, COLOR_RESET);
+            printf("%sID: %s%d\n", COLOR_GREEN, COLOR_RESET, temp -> id);
+            printf("%sFirst Name: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> first_name);
+            printf("%sLast Name: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> last_name);
+            printf("%sDate of Birth: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> date_of_birth);
+            printf("%sMajor ID: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> major_id);
+            printf("%sStatus: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> status);
             return;
         }
         temp = temp -> next; 

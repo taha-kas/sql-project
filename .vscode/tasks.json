@@ -8,7 +8,7 @@
             "args": [
                 "-NoProfile",
                 "-Command",
-                "& { gcc -fdiagnostics-color=always -g C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/ui_helpers.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/student.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/main.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/database.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/courses.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/major.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/bin/sqlite3.o -IC:/Users/Taha/OneDrive/Bureau/sqlite_project/include -o C:/Users/Taha/OneDrive/Bureau/sqlite_project/bin/student.exe; C:/Users/Taha/OneDrive/Bureau/sqlite_project/bin/student.exe }"
+                "& { gcc -fdiagnostics-color=always -g C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/ui_helpers.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/student.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/main.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/database.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/courses.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/major.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/condition.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/course_list.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/enrollment.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/grade.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/schema.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/src/sql.c C:/Users/Taha/OneDrive/Bureau/sqlite_project/bin/sqlite3.o -IC:/Users/Taha/OneDrive/Bureau/sqlite_project/include -o C:/Users/Taha/OneDrive/Bureau/sqlite_project/bin/student.exe; C:/Users/Taha/OneDrive/Bureau/sqlite_project/bin/student.exe }"
             ],
             "group": {
                 "kind": "build",
@@ -17,7 +17,7 @@
             "problemMatcher": [
                 "$gcc"
             ],
-            "detail": "Fast build: compile student.c ,main.c, database.c, courses.c, link with sqlite3.o, then run student.exe"
+            "detail": "Fast build: compile student.c ,main.c, database.c, courses.c, major.c, condition.c, course_list.c, enrollment.c, grade.c, schema.c, sql.c, link with sqlite3.o, then run student.exe"
         }
     ]
 }

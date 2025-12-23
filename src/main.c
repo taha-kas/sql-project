@@ -5,6 +5,11 @@
 #include "sqlite3.h"
 #include "database.h"
 #include "ui_helpers.h"
+#include "enrollment.h"
+#include "schema.h"
+#include "condition.h"
+#include "grade.h"
+#include "course_list.h"
 
 
 ////////////////////////////////////////ADMIN SECTION MENUS/////////////////////////////////////////
@@ -133,13 +138,14 @@ int main() {
     db_connect(&test, "test.db");
 
     //Delete all existing data in the database for testing purposes
-    sqlite3_exec(test, "DROP TABLE IF EXISTS student;", NULL, NULL, &err_msg);
-    sqlite3_exec(test, "DELETE FROM major;", NULL, NULL, &err_msg);
-    sqlite3_exec(test, "DELETE FROM course;", NULL, NULL, &err_msg);
+    // sqlite3_exec(test, "DROP TABLE IF EXISTS student;", NULL, NULL, &err_msg);
+    // sqlite3_exec(test, "DELETE FROM major;", NULL, NULL, &err_msg);
+    // sqlite3_exec(test, "DELETE FROM course;", NULL, NULL, &err_msg);
 
-    CreateStudentTable(test);
-    CreateMajorTable(test); 
-    CreateCourseTable(test);
+    // CreateStudentTable(test);
+    // CreateMajorTable(test); 
+    // CreateCourseTable(test);
+    // create_tables(test);
     
     // Load data structures
     print_info("Loading student records...");
@@ -291,7 +297,7 @@ int main() {
                             }
                             printf("\n");
                             
-                            exportToCSV(test, StudentList, filename);
+                            exportToCSV(StudentList, filename);
                             
                             print_success("Students exported successfully!");
                             
@@ -595,78 +601,132 @@ int main() {
     
     else if(choice == 2){
 
-    //     int student_id;
-    //     print_warning("\n» Enter your Student ID: ");
-    //     scanf("%d", &student_id);
-    //     clear_input_buffer();
+        int student_id;
+        print_warning("\n» Enter your Student ID: ");
+        scanf("%d", &student_id);
+        clear_input_buffer();
 
-    //     // Check if student exists
-    //     Student* current_student = findStudentById(StudentList, student_id);//To be added later (would be better if findStudentById retunrs 0 or 1)
-    //     if(current_student == NULL){
-    //         print_error("Student ID not found.");
-    //         Sleep(1500);
-    //         continue;
-    //     }
+        // Check if student exists
+        if(!StudentExistsInDB(test, student_id)){
+            print_error("Student ID not found.");
+            Sleep(1500);
+            continue;
+        }
 
-    //     print_success("Login successful!");
-    //     Sleep(1000);
+        print_success("Login successful!");
+        Sleep(1000);
 
-    //     int student_exit = 0;
+        int student_exit = 0;
 
-    //     while(!student_exit){
-    //         StudentMainMenu();
+        while(!student_exit){
+            StudentMainMenu();
 
-    //         int student_choice = get_numeric_input("", 1, 5);
-    //         if (student_choice == -1) continue;
+            int student_choice = get_numeric_input("", 1, 5);
+            if (student_choice == -1) continue;
 
-    //         increment_command_count();
+            increment_command_count();
 
-    //         if(student_choice == 1){
-    //             /******** VIEW PERSONAL INFO ********/
-    //             print_banner("Personal Information", COLOR_CYAN);
-    //             printStudent(StudentList, student_id);
+            if(student_choice == 1){
+                /******** VIEW PERSONAL INFO ********/
+                print_banner("Personal Information", COLOR_CYAN);
+                printStudent(StudentList, student_id); // to be modified later 
 
-    //             print_warning("\nPress Enter to continue...");
-    //             getchar();
-    //         }
-    //         else if(student_choice == 2){
-    //             /******** ENROLLMENT ********/
-    //             print_banner("Academic Enrollment", COLOR_GREEN);
+                print_warning("\nPress Enter to continue...");
+                getchar();
+            }
+            else if(student_choice == 2){
+                /******** ENROLLMENT ********/
+                print_banner("Academic Enrollment", COLOR_GREEN);
 
-    //             if(is_student_enrolled(test, student_id)){
-    //                 print_warning("You are already enrolled for this academic year.");
-    //             } 
-    // //First check if the student is accepted in the university or not. (The database should store the student info once they're accepted, fill the rest later when they select what major they want to pursue)
-    //             else {
-    //                 enroll_student(test, student_id);
-    //                 print_success("Enrollment completed successfully!");
-    //             }
+                print_success("Congratulations! You are eligible to enroll for the current academic year.");
+                print_info("Proceeding to enrollment...");
+                Sleep(2000);
 
-    //             print_warning("\nPress Enter to continue...");
-    //             getchar();
-    //         }
-    //         else if(student_choice == 3){
-    //             /******** VIEW COURSES ********/
-    //             print_banner("Enrolled Courses", COLOR_BLUE);
-    //             print_courses_for_student(test, student_id);
+                print_banner("Current Available Majors", COLOR_BLUE);
+                if(printAllMajors(MajorList)){
+                    print_warning("\n» Enter Major ID to enroll in: ");
+                }
+                else{
+                    print_error("No majors available at the moment. Please contact administration.");
+                    print_warning("\nPress Enter to continue...");
+                    getchar();
+                    continue;
+                }
+                char major_id[10];
+                fgets(major_id, sizeof(major_id), stdin);
+                major_id[strcspn(major_id, "\n")] = '\0';
 
-    //             print_warning("\nPress Enter to continue...");
-    //             getchar();
-    //         }
-    //         else if(student_choice == 4){
-    //             /******** VIEW GRADES ********/
-    //             print_banner("Grades & Results", COLOR_MAGENTA);
-    //             print_student_grades(test, student_id);
+                char semester[10];
+                print_warning("» Enter Semester (e.g., S1_2024): ");
+                fgets(semester, sizeof(semester), stdin);
+                semester[strcspn(semester, "\n")] = '\0';
 
-    //             print_warning("\nPress Enter to continue...");
-    //             getchar();
-    //         }
-    //         else if(student_choice == 5){
-    //             print_info("Logging out...");
-    //             Sleep(1000);
-    //             student_exit = 1;
-    //         }
-    //     }
+                enrollStudent(test, MajorList, student_id, major_id, semester);
+                print_success("Enrollment completed successfully!");
+ 
+
+                print_warning("\nPress Enter to continue...");
+                getchar();
+            }
+            else if(student_choice == 3){
+                /******** VIEW COURSES ********/
+                print_banner("Enrolled Courses", COLOR_BLUE);
+
+                Student* student = StudentList -> head;
+
+                while(student != NULL && student -> id != student_id){
+                    student = student -> next; 
+                }
+
+                if(student -> major_id == NULL){
+                    print_error("You are not enrolled in any major. Please enroll first.");
+                }
+                else{
+                    print_info("Fetching your enrolled courses...");
+                    Sleep(1000);
+                    print_courses_in_major(MajorList, student -> major_id);
+                }
+
+                print_warning("\nPress Enter to continue...");
+                getchar();
+            }
+            else if(student_choice == 4){
+                /******** VIEW GRADES ********/
+                print_banner("Grades & Results", COLOR_MAGENTA);
+
+                Student* student = StudentList -> head;
+
+                while(student != NULL && student -> id != student_id){
+                    student = student -> next; 
+                }
+
+                if(student -> major_id == NULL){
+                    print_error("You are not enrolled in any major. Please enroll first.");
+                }
+                else{
+                    char semester[10];
+                    print_warning("» Enter Semester (e.g., S1_2024) or 'all' for all semesters: ");
+                    fgets(semester, sizeof(semester), stdin);
+                    semester[strcspn(semester, "\n")] = '\0';
+                    Sleep(1000);
+                }
+                
+                if(!affichage_grade(test, MajorList, student_id, NULL, "all")){
+                    print_error("No grades found for the specified semester.");
+                }
+                else{
+                    print_success("Grades fetched successfully!");
+                }
+
+                print_warning("\nPress Enter to continue...");
+                getchar();
+            }
+            else if(student_choice == 5){
+                print_info("Logging out...");
+                Sleep(1000);
+                student_exit = 1;
+            }
+        }
 }
 //////////////////////////////////////// END OF STUDENT PORTAL /////////////////////////////////////
 

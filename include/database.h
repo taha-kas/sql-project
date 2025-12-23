@@ -44,7 +44,10 @@ typedef struct Student{
     int id;
     char* first_name; //Utiliser des pointeurs au lieu de tableaux pour permettre la duplication de chaînes
     char* last_name; 
-    char* date_of_birth;  
+    char* date_of_birth;
+    char* phone_number;
+    char* email;
+    char* address;  
     char* status;         
     char* major_id;
     struct Student* next; 
@@ -69,7 +72,7 @@ void printStudent(Student_List* list, int id);
 void printStudentList(Student_List* list, Major_List* major_list, char* major_id);
 void freeList(Student_List* list);
 void importFromCSV(sqlite3 *db, Student_List* list, const char* filename);
-void exportToCSV(sqlite3 *db, Student_List* list, const char* filename);
+void exportToCSV(Student_List* list, const char* filename);
 ///////////////////////////////END OF STUDENT FUNCTIONS/////////////////////////////////////
 
 

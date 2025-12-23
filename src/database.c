@@ -18,8 +18,12 @@ int db_connect(sqlite3 **db, char* db_name){
 int CreateStudentTable(sqlite3 *db){
 char* sql = "CREATE TABLE IF NOT EXISTS student ("
       "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-      "first_name TEXT NOT NULL, ""last_name TEXT NOT NULL, "
+      "first_name TEXT NOT NULL, "
+      "last_name TEXT NOT NULL, "
       "date_of_birth TEXT NOT NULL, "
+      "phone_number TEXT, "
+      "email TEXT, "
+      "address TEXT, "
       "major_id TEXT, "
       "status TEXT NOT NULL);";
 
@@ -40,8 +44,8 @@ int db_insert_student(sqlite3 *db, Student* s){
 
     if(sqlite3_prepare_v2(
         db,
-        "INSERT INTO student(first_name, last_name, date_of_birth, status)"
-        "VALUES (?,?,?,?)",
+        "INSERT INTO student(first_name, last_name, date_of_birth,status, phone_number, email, address)"
+        "VALUES (?,?,?,?,?,?,?)",
         -1,
         &stmt,
         NULL
@@ -54,6 +58,9 @@ int db_insert_student(sqlite3 *db, Student* s){
     sqlite3_bind_text(stmt, 2, s -> last_name, -1,SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, s -> date_of_birth, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 4, s -> status, -1, SQLITE_TRANSIENT); 
+    sqlite3_bind_text(stmt, 5, s -> phone_number, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 6, s -> email, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 7, s -> address, -1, SQLITE_TRANSIENT);
     
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         printf("Insert failed: %s\n", sqlite3_errmsg(db));
@@ -84,11 +91,13 @@ void load_students(sqlite3 *db, Student_List* list){
         const char* fn = (const char*) sqlite3_column_text(stmt, 1);
         const char* ln = (const char*) sqlite3_column_text(stmt, 2);
         const char* dob = (const char*) sqlite3_column_text(stmt, 3);
-        const char* status = (const char*) sqlite3_column_text(stmt, 4);
+        const char* major_id = (const char*) sqlite3_column_text(stmt, 4);
+        const char* status = (const char*) sqlite3_column_text(stmt, 5);
         Student* temp = malloc(sizeof(Student)); 
         temp -> first_name = strdup(fn);
         temp -> last_name = strdup(ln);
         temp -> date_of_birth = strdup(dob);
+        temp -> major_id = strdup(major_id);
         temp -> status = strdup(status);
         temp -> next = NULL;
 

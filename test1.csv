@@ -1,15 +1,30 @@
-John,Doe,2000-01-01
-Jane,Smith,1999-05-15
-Alice,Johnson,2001-09-23
-Bob,Brown,1998-12-30
-Charlie,Davis,2002-07-11
-Eve,Wilson,2000-03-05
-Taha,Maftah,2005-11-10
-Anwar,Nafidi,2004-09-19
-Rime,Dadi,2005-11-13
-test,test,1999-12-12
-test2,test2,2000-01-01
-test3,test3,2001-02-02
-test4,test4,2002-03-03
-test5,test5,2003-04-04
-test6,test6,1999-12-12
+John,Doe,2000-01-01,6551234567,Johndoe@esi.ac.ma,123 Avenue Mohammed V Casablanca
+Jane,Smith,1999-05-15,6551234568,Jsmith@ensa.ma,45 Rue Ibn Battouta Rabat
+Alice,Johnson,2001-09-23,6551234569,Ajohnson@um5r.ac.ma,78 Boulevard Hassan II Fes
+Bob,Brown,1998-12-30,6551234570,Bbrown@enim.ma,9 Rue Moulay Ismail Meknes
+Charlie,Davis,2002-07-11,6551234571,Cdavis@uh2c.ac.ma,32 Avenue des FAR Marrakech
+Eve,Wilson,2000-03-05,6551234572,Ewilson@uit.ac.ma,15 Rue Palestine Agadir
+Taha,Maftah,2005-11-10,6551234573,Tmaftah@emsi.ma,67 Avenue Allal El Fassi Tangier
+Anwar,Nafidi,2004-09-19,6551234574,Anafidi@aui.ma,24 Rue Omar Slaoui Kenitra
+Rime,Dadi,2005-11-13,6551234575,Rdadi@uca.ac.ma,88 Boulevard Mohammed VI Oujda
+Habbane,Youssef,2003-08-22,6551234576,Yhabbane@ensta.ma,11 Avenue Hassan I Salé
+test,test,1999-12-12,6551234560,test.student@etu.uae.ac.ma,1 Rue Ibn Khaldoun Tetouan
+test2,test2,2000-01-01,6551234561,test2@enset-media.ac.ma,22 Avenue Moulay Youssef El Jadida
+test3,test3,2001-02-02,6551234562,test3@fstm.ac.ma,33 Rue Ibn Sina Nador
+test4,test4,2002-03-03,6551234563,test4@ensam.ma,44 Boulevard Moulay Idriss I Beni Mellal
+test5,test5,2003-04-04,6551234564,test5@ensias.ma,55 Avenue des Nations Unies Khouribga
+test6,test6,1999-12-12,6551234565,test6@enim.ma,66 Rue Ahmed El Majdoubi Safi
+test7,test7,2000-01-01,6551234566,test7@ensak.ma,77 Avenue Ibn Zohr Larache
+test8,test8,2001-02-02,6551234567,test8@est.ma,88 Rue Moulay Rachid Essaouira
+test9,test9,2002-03-03,6551234568,test9@fst.ac.ma,99 Boulevard Abdelkrim Khattabi Al Hoceima
+test10,test10,2003-04-04,6551234569,test10@ensah.ma,100 Avenue Mohamed Diouri Taza
+test11,test11,1999-12-12,6551234570,test11@ensao.ma,111 Rue Imam Malik Ouarzazate
+test12,test12,2000-01-01,6551234571,test12@fpl.ac.ma,222 Avenue Moulay Slimane Errachidia
+test13,test13,2001-02-02,6551234572,test13@ens.ma,333 Rue Ahmed Chaouki Dakhla
+test14,test14,2002-03-03,6551234573,test14@enssup.ma,444 Boulevard Mohammed V Laayoune
+test15,test15,2003-04-04,6551234574,test15@um6p.ma,555 Avenue Prince Moulay Abdellah Benguerir
+test16,test16,1999-12-12,6551234575,test16@encg.ma,666 Rue Al Qods Settat
+test17,test17,2000-01-01,6551234576,test17@ensmr.ma,777 Avenue Ibn Tofail Khenifra
+test18,test18,2001-02-02,6551234577,test18@fstt.ac.ma,888 Rue Ibn Rochd Taroudant
+test19,test19,2002-03-03,6551234578,test19@ensfe.ma,999 Avenue Al Massira Guercif
+test20,test20,2003-04-04,6551234579,test20@enscm.ma,1010 Boulevard Mohammed VI Ifrane
