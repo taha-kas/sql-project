@@ -24,7 +24,7 @@ void create_tables(sqlite3 *db) {
                       "major_id Text,"
                       "semester_id text,"
                       "Foreign key (student_id) references student(student_id),"
-                      "Foreign key (major_id) references major(major_id)"
+                      "Foreign key (major_id) references major(major_id) DELETE CASCADE,"
                       "FOREIGN KEY (semester_id) REFERENCES semester(semester_id));";
 
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
@@ -39,8 +39,8 @@ void create_tables(sqlite3 *db) {
                        "Major_id Text,"
                        "prerequisite_Major_id Text,"
                        "Primary key (Major_id,prerequisite_Major_id),"
-                       "foreign key(Major_id) references Major(Major_id),"
-                       "foreign key(prerequisite_Major_id) references Major(Major_id));";
+                       "foreign key(Major_id) references Major(Major_id) DELETE CASCADE,"
+                       "foreign key(prerequisite_Major_id) references Major(Major_id) DELETE CASCADE);";
                        
     rc = sqlite3_exec(db, sql1, 0, 0, &err_msg);
     if(rc != SQLITE_OK) {

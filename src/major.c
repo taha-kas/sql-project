@@ -116,16 +116,16 @@ int removeMajor(sqlite3* db, Major_List* list, char* major_id){
         prev -> next = temp -> next; 
     }
 
+    if(!db_remove_major(db, temp -> major_id)){
+        printf("Error: Could not remove major from database\n");
+        return 0; 
+    }
+    
     free(temp -> major_id);
     free(temp -> major_name);
     free(temp -> head_professor);
     freeCourseList(temp -> course_list);
     free(temp);
-
-    if(!db_remove_major(db, major_id)){
-        printf("Error: Could not remove major from database\n");
-        return 0; 
-    }
 
     list -> num_of_majors--;
     printf("Major with ID %s has been removed successfully.\n", major_id);
@@ -228,16 +228,16 @@ int printAllMajors(Major_List* list){
         return 0; 
     }
     
-    printf("________________________________________________________________\n");
+    printf("___________________________________________________________________________________________________\n");
     printf("List of Majors:\n");
-    printf("________________________________________________________________\n");
-    printf("%-15s%-30s%-20s\n", "Major ID", "Major Name", "Head Professor");
-    printf("________________________________________________________________\n");
+    printf("___________________________________________________________________________________________________\n");
+    printf("%-15s%-65s%-30s\n", "Major ID", "Major Name", "Head Professor");
+    printf("___________________________________________________________________________________________________\n");
     while(temp != NULL){
-        printf("%-15s%-30s%-20s\n", temp -> major_id, temp -> major_name, temp ->head_professor);
+        printf("%-15s%-65s%-30s\n", temp -> major_id, temp -> major_name, temp ->head_professor);
         temp = temp -> next;
     }
-    printf("________________________________________________________________\n");
+    printf("___________________________________________________________________________________________________\n");
 
     return 1;
 }

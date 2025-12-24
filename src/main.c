@@ -135,7 +135,7 @@ int main() {
     
     print_info("Initializing database...");
     Sleep(500);
-    db_connect(&test, "test.db");
+    db_connect(&test, "bin/test.db");
 
     //Delete all existing data in the database for testing purposes
     // sqlite3_exec(test, "DROP TABLE IF EXISTS student;", NULL, NULL, &err_msg);
@@ -157,6 +157,7 @@ int main() {
     print_info("Loading major records...");
     Sleep(500);
     Major_List* MajorList = CreateMajorList();
+    LoadMajors(test, MajorList);
     
     print_info("Loading course records...");
     Sleep(500);
@@ -178,6 +179,7 @@ int main() {
         
         increment_command_count();
         
+        //////////////////////////////////////// START OF ADMIN PORTAL /////////////////////////////////////
         if(choice == 1){
             
             char password[50];
@@ -289,11 +291,11 @@ int main() {
                             
                             print_info("Exporting students...");
                             
-                            // Simulate progress bar for CSV export
+                            // progress bar
                             printf("\n");
                             for (int i = 0; i <= 100; i += 5) {
                                 display_progress_bar(i, 100, 50);
-                                Sleep(50); // Simulate processing time
+                                Sleep(50); 
                             }
                             printf("\n");
                             
@@ -531,8 +533,11 @@ int main() {
                             print_warning("Removing major...");
                             Sleep(1000);
                             
-                            removeMajor(test, MajorList, major_id);
-                            print_success("Major removed successfully!");
+                            if(removeMajor(test, MajorList, major_id)){
+                                print_success("Major removed successfully!");
+                            } else {
+                                print_error("Failed to remove major.");
+                            }
                             
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
@@ -598,7 +603,13 @@ int main() {
                 }
             }
         }
+    //////////////////////////////////////// END OF ADMIN PORTAL /////////////////////////////////////
+
+
+
+
     
+    //////////////////////////////////////// START OF STUDENT PORTAL /////////////////////////////////////
     else if(choice == 2){
 
         int student_id;
