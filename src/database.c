@@ -91,12 +91,18 @@ void load_students(sqlite3 *db, Student_List* list){
         const char* fn = (const char*) sqlite3_column_text(stmt, 1);
         const char* ln = (const char*) sqlite3_column_text(stmt, 2);
         const char* dob = (const char*) sqlite3_column_text(stmt, 3);
-        const char* major_id = (const char*) sqlite3_column_text(stmt, 4);
-        const char* status = (const char*) sqlite3_column_text(stmt, 5);
+        const char* phone_number = (const char*) sqlite3_column_text(stmt, 4);
+        const char* email = (const char*) sqlite3_column_text(stmt, 5);
+        const char* address = (const char*) sqlite3_column_text(stmt, 6);
+        const char* major_id = (const char*) sqlite3_column_text(stmt, 7);
+        const char* status = (const char*) sqlite3_column_text(stmt, 8);
         Student* temp = malloc(sizeof(Student)); 
         temp -> first_name = strdup(fn);
         temp -> last_name = strdup(ln);
         temp -> date_of_birth = strdup(dob);
+        temp -> phone_number = strdup(phone_number);
+        temp -> email = strdup(email);
+        temp -> address = strdup(address);
         temp -> major_id = strdup(major_id);
         temp -> status = strdup(status);
         temp -> next = NULL;
@@ -135,7 +141,7 @@ void db_update_student(sqlite3 *db, Student* s){
 
     if(sqlite3_prepare_v2(
         db,
-        "UPDATE student SET first_name = ?, last_name = ?, date_of_birth = ?, status = ? WHERE id = ?",
+        "UPDATE student SET first_name = ?, last_name = ?, date_of_birth = ?,major_id = ?, status = ? WHERE id = ?",
         -1,
         &stmt,
         NULL
@@ -147,8 +153,9 @@ void db_update_student(sqlite3 *db, Student* s){
     sqlite3_bind_text(stmt, 1, s -> first_name, -1, SQLITE_TRANSIENT); 
     sqlite3_bind_text(stmt, 2, s -> last_name, -1,SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, s -> date_of_birth, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, s -> status, -1, SQLITE_TRANSIENT); 
-    sqlite3_bind_int(stmt, 5, s -> id);
+    sqlite3_bind_text(stmt, 4, s -> major_id, -1, SQLITE_TRANSIENT); 
+    sqlite3_bind_text(stmt, 5, s -> status, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 6, s -> id);
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         printf("Update failed: %s\n", sqlite3_errmsg(db));
     } 
@@ -292,7 +299,7 @@ void load_courses(sqlite3 *db, Course_List* list){
 
 void CreateMajorTable(sqlite3* db){
     char* sql = "CREATE TABLE IF NOT EXISTS major ("
-                "major_id TEXT NOT NULL, "
+                "major_id TEXT PRIMARY KEY, "
                 "major_name TEXT NOT NULL, "
                 "head_professor TEXT NOT NULL,"
                 "capacity INTEGER, "
@@ -415,6 +422,8 @@ void LoadMajors(sqlite3 *db, Major_List* list){
         temp -> major_id = strdup(major_id);
         temp -> major_name = strdup(major_name);
         temp -> head_professor = strdup(head_professor);
+        temp -> course_list = CreateCourseList();
+        temp -> courses_loaded = 0;
         temp -> capacity = capacity;
         temp -> enrolled_students = enrolled_students;
         temp -> next = NULL;
@@ -500,18 +509,31 @@ int db_insert_major_course(sqlite3* db, const char* major_id, Course* c){
     return 1;
 }
 
-void load_major_courses(sqlite3 *db, Major_List* major_list){
-   sqlite3_stmt* stmt; 
+void load_major_courses(sqlite3 *db, Major_List* major_list, char* major_id){
+
+    Major* major = major_list->head;
+    while (major && strcmp(major->major_id, major_id) != 0) {
+        major = major->next;
+    }
+
+    if(major == NULL){
+        printf("Major with ID %s not found.\n", major_id);
+        return; 
+    }
+
+    sqlite3_stmt* stmt; 
    
    if (sqlite3_prepare_v2(
         db,
-        "SELECT * FROM major_course",
+        "SELECT * FROM major_course WHERE major_id = ?",
         -1,
         &stmt,
         NULL) != SQLITE_OK){
             printf("Error preparing SELECT statement: %s\n", sqlite3_errmsg(db));
             return;
    }
+
+   sqlite3_bind_text(stmt, 1, major_id, -1, SQLITE_TRANSIENT);
 
    while(sqlite3_step(stmt) == SQLITE_ROW){
         const char* major_id = (const char*) sqlite3_column_text(stmt, 0);

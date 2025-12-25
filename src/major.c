@@ -50,6 +50,7 @@ Major* CreateMajor(){
     
     new_major -> capacity = 30;
     new_major -> course_list = CreateCourseList();
+    new_major -> courses_loaded = 0; 
     new_major -> enrolled_students = 0;
     new_major -> next = NULL;
 
@@ -75,6 +76,7 @@ int Insert_major_list(Major_List* list, Major* major) {
     }
     temp -> next = major;
     list -> num_of_majors++;
+    major -> courses_loaded = 1;
     return 1;
 }
 
@@ -146,45 +148,57 @@ int UpdateMajor(sqlite3 *db, Major_List* list, char* major_id){
         return 0; 
     }
 
+    printf("===============================================================\n");
     printf("Current details:\n");
+    printf("===============================================================\n");
+    printf("Major ID: %s\n", temp -> major_id);
+    printf("===============================================================\n");
     printf("Major Name: %s\n", temp -> major_name);
+    printf("===============================================================\n");
     printf("Head Professor: %s\n", temp -> head_professor);
+    printf("===============================================================\n");
     printf("Capacity: %d\n", temp -> capacity);
+    printf("===============================================================\n");
     printf("Enrolled Students: %d\n", temp -> enrolled_students);
-
-    printf("What fields do you want to update?\n");
-
-    printf("1. Major Name (y/n)\n");
+    printf("===============================================================\n");
+    printf("\n\nWhat fields do you want to update?\n");
+    printf("[1]Major ID\n[2] Major Name\n[3] Head Professor\n[4] Capacity\n");
+    printf("Enter your choice: ");
     char choice[10];
     fgets(choice, sizeof(choice), stdin);
     choice[strcspn(choice, "\n")] = 0;
-
-    if(choice[0] == 'y' || choice[0] == 'Y'){
-        char new_major_name[50];
+    
+    if(strcmp(choice, "1") == 0){
+        char new_major_id[50];
+        printf("Enter new Major ID: ");
+        fgets(new_major_id, sizeof(new_major_id), stdin);
+        new_major_id[strcspn(new_major_id, "\n")] = 0;
+        temp -> major_id = strdup(new_major_id);
+    }
+    else if(strcmp(choice, "2") == 0){
+        char new_major_name[100];
         printf("Enter new Major Name: ");
         fgets(new_major_name, sizeof(new_major_name), stdin);
         new_major_name[strcspn(new_major_name, "\n")] = 0;
         temp -> major_name = strdup(new_major_name);
     }
-
-    printf("2. Head Professor (y/n)\n");
-    fgets(choice, sizeof(choice), stdin); 
-    if(choice[0] == 'y' || choice[0] == 'Y'){
+    else if(strcmp(choice, "3") == 0){
         char new_head_professor[50];
         printf("Enter new Head Professor Name: ");
         fgets(new_head_professor, sizeof(new_head_professor), stdin);
         new_head_professor[strcspn(new_head_professor, "\n")] = 0;
         temp -> head_professor = strdup(new_head_professor);
     }
-
-    printf("3. Capacity (y/n)\n");
-    fgets(choice, sizeof(choice), stdin); 
-    if(choice[0] == 'y' || choice[0] == 'Y'){
+    else if(strcmp(choice, "4") == 0){
         int new_capacity;
         printf("Enter new Capacity: ");
         scanf("%d", &new_capacity);
         getchar();
         temp -> capacity = new_capacity;
+    }
+    else{
+        printf("Invalid choice.\n");
+        return 0; 
     }
 
     printf("Major with ID %s updated successfully.\n", major_id);

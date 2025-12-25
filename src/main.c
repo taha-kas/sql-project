@@ -129,41 +129,49 @@ int main() {
     print_welcome_banner();
     
     // Database setup
-    sqlite3 *test;
+    sqlite3 *univ;
     char *err_msg = 0;
 
     
     print_info("Initializing database...");
     Sleep(500);
-    db_connect(&test, "bin/test.db");
+    db_connect(&univ, "univ.db");
 
     //Delete all existing data in the database for testing purposes
-    // sqlite3_exec(test, "DROP TABLE IF EXISTS student;", NULL, NULL, &err_msg);
-    // sqlite3_exec(test, "DELETE FROM major;", NULL, NULL, &err_msg);
-    // sqlite3_exec(test, "DELETE FROM course;", NULL, NULL, &err_msg);
+    // sqlite3_exec(univ, "DROP TABLE IF EXISTS student;", NULL, NULL, &err_msg);
+    // sqlite3_exec(univ, "DELETE FROM major;", NULL, NULL, &err_msg);
+    // sqlite3_exec(univ, "DELETE FROM course;", NULL, NULL, &err_msg);
 
-    // CreateStudentTable(test);
-    // CreateMajorTable(test); 
-    // CreateCourseTable(test);
-    // create_tables(test);
+    CreateStudentTable(univ);
+    CreateMajorTable(univ); 
+    CreateCourseTable(univ);
+    CreateMajorCourseTable(univ);
+    // create_tables(univ);
     
     // Load data structures
     print_info("Loading student records...");
     Sleep(500);
     Student_List* StudentList = CreateList();
-    load_students(test, StudentList);
+    load_students(univ, StudentList);
     
     //a ajouter apres avoir rempli la table major et la table course
     print_info("Loading major records...");
     Sleep(500);
     Major_List* MajorList = CreateMajorList();
-    LoadMajors(test, MajorList);
+    LoadMajors(univ, MajorList);
     
     print_info("Loading course records...");
     Sleep(500);
     Course_List* CourseList = malloc(sizeof(Course_List));
     CourseList->head = NULL;
     CourseList->num_of_courses = 0;
+
+    print_info("Loading major-course relations...");
+    Major* m = MajorList->head;
+    while (m != NULL) {
+        load_major_courses(univ, MajorList, m->major_id);
+        m = m->next;
+    }
     
     print_success("System initialization complete!");
     printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
@@ -246,7 +254,7 @@ int main() {
                             printf("\n");
                             
                             Student* new_student = CreateNode();
-                            Save_student(test, StudentList, new_student);
+                            Save_student(univ, StudentList, new_student);
                             
                             increment_student_added();
                             print_success("Student added successfully!");
@@ -273,9 +281,7 @@ int main() {
                             }
                             printf("\n");
                             
-                            importFromCSV(test, StudentList, filename);
-                            
-                            print_success("CSV import completed!");
+                            importFromCSV(univ, StudentList, filename);
                             
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
@@ -301,8 +307,6 @@ int main() {
                             
                             exportToCSV(StudentList, filename);
                             
-                            print_success("Students exported successfully!");
-                            
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
                         }
@@ -318,8 +322,7 @@ int main() {
                             print_warning("Removing student...");
                             Sleep(1000);
                             
-                            removeStudent(test, StudentList, id);
-                            print_success("Student removed successfully!");
+                            removeStudent(univ, StudentList, id);
                             
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
@@ -336,7 +339,7 @@ int main() {
                             print_info("Updating student information...");
                             Sleep(1000);
                             
-                            updateStudent(test, StudentList, id);
+                            updateStudent(univ, MajorList, StudentList, id);
                             print_success("Student updated successfully!");
                             
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
@@ -366,7 +369,12 @@ int main() {
                             print_info("Loading student list...");
                             Sleep(500);
                             
-                            // printStudentList(StudentList, MajorList, NULL);
+                            printf("Enter major ID: ");
+                            char major_id[50];
+                            fgets(major_id, sizeof(major_id), stdin);
+                            major_id[strcspn(major_id, "\n")] = '\0';
+
+                            printStudentList(StudentList, MajorList, major_id);
                             
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
@@ -398,7 +406,7 @@ int main() {
                             print_info("Adding course...");
                             Sleep(1000);
                             
-                            SaveCourse(test, CourseList, new_course);
+                            SaveCourse(univ, CourseList, new_course);
                             increment_course_added();
                             print_success("Course added successfully!");
                             
@@ -417,7 +425,7 @@ int main() {
                             print_warning("Removing course...");
                             Sleep(1000);
                             
-                            removeCourse(test, CourseList, course_id);
+                            removeCourse(univ, CourseList, course_id);
                             print_success("Course removed successfully!");
                             
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
@@ -435,7 +443,7 @@ int main() {
                             print_info("Updating course...");
                             Sleep(1000);
                             
-                            updateCourse(test, CourseList, course_id);
+                            updateCourse(univ, CourseList, course_id);
                             print_success("Course updated successfully!");
                             
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
@@ -468,7 +476,7 @@ int main() {
                             print_info("Adding course to major...");
                             Sleep(1000);
                             
-                            add_course_to_major(test, MajorList, major_id, course_id, course_name, professor);
+                            add_course_to_major(univ, MajorList, major_id, course_id, course_name, professor);
                             print_success("Course added to major successfully!");
                             
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
@@ -514,7 +522,7 @@ int main() {
                             Sleep(1000);
                             
                             Insert_major_list(MajorList, new_major);
-                            db_insert_major(test, new_major);
+                            db_insert_major(univ, new_major);
                             increment_major_added();
                             print_success("Major added successfully!");
                             
@@ -533,7 +541,7 @@ int main() {
                             print_warning("Removing major...");
                             Sleep(1000);
                             
-                            if(removeMajor(test, MajorList, major_id)){
+                            if(removeMajor(univ, MajorList, major_id)){
                                 print_success("Major removed successfully!");
                             } else {
                                 print_error("Failed to remove major.");
@@ -551,11 +559,11 @@ int main() {
                             fgets(major_id, sizeof(major_id), stdin);
                             major_id[strcspn(major_id, "\n")] = '\0';
                             
+                            UpdateMajor(univ, MajorList, major_id);
+                            print_success("Major updated successfully!");
+
                             print_info("Updating major...");
                             Sleep(1000);
-                            
-                            UpdateMajor(test, MajorList, major_id);
-                            print_success("Major updated successfully!");
                             
                             printf("\n%sPress Enter to continue...%s", COLOR_YELLOW, COLOR_RESET);
                             getchar();
@@ -575,7 +583,7 @@ int main() {
                         else if(major_choice == 5){
                             print_banner("Courses in Major", COLOR_BLUE);
                             printf("\n");
-                            
+
                             char major_id[10];
                             printf("%s» Enter Major ID to view courses:%s ", COLOR_YELLOW, COLOR_RESET);
                             fgets(major_id, sizeof(major_id), stdin);
@@ -610,135 +618,132 @@ int main() {
 
     
     //////////////////////////////////////// START OF STUDENT PORTAL /////////////////////////////////////
-    else if(choice == 2){
+//     else if(choice == 2){
 
-        int student_id;
-        print_warning("\n» Enter your Student ID: ");
-        scanf("%d", &student_id);
-        clear_input_buffer();
+//         int student_id;
+//         print_warning("\n» Enter your Student ID: ");
+//         scanf("%d", &student_id);
+//         clear_input_buffer();
 
-        // Check if student exists
-        if(!StudentExistsInDB(test, student_id)){
-            print_error("Student ID not found.");
-            Sleep(1500);
-            continue;
-        }
+//         // Check if student exists
+//         if(!StudentExistsInDB(univ, student_id)){
+//             print_error("Student ID not found.");
+//             Sleep(1500);
+//             continue;
+//         }
 
-        print_success("Login successful!");
-        Sleep(1000);
+//         print_success("Login successful!");
+//         Sleep(1000);
 
-        int student_exit = 0;
+//         int student_exit = 0;
 
-        while(!student_exit){
-            StudentMainMenu();
+//         while(!student_exit){
+//             StudentMainMenu();
 
-            int student_choice = get_numeric_input("", 1, 5);
-            if (student_choice == -1) continue;
+//             int student_choice = get_numeric_input("", 1, 5);
+//             if (student_choice == -1) continue;
 
-            increment_command_count();
+//             increment_command_count();
 
-            if(student_choice == 1){
-                /******** VIEW PERSONAL INFO ********/
-                print_banner("Personal Information", COLOR_CYAN);
-                printStudent(StudentList, student_id); // to be modified later 
+//             if(student_choice == 1){
+//                 /******** VIEW PERSONAL INFO ********/
+//                 print_banner("Personal Information", COLOR_CYAN);
+//                 printStudent(StudentList, student_id); // to be modified later 
 
-                print_warning("\nPress Enter to continue...");
-                getchar();
-            }
-            else if(student_choice == 2){
-                /******** ENROLLMENT ********/
-                print_banner("Academic Enrollment", COLOR_GREEN);
+//                 print_warning("\nPress Enter to continue...");
+//                 getchar();
+//             }
+//             else if(student_choice == 2){
+//                 /******** ENROLLMENT ********/
+//                 print_banner("Academic Enrollment", COLOR_GREEN);
 
-                print_success("Congratulations! You are eligible to enroll for the current academic year.");
-                print_info("Proceeding to enrollment...");
-                Sleep(2000);
+//                 print_success("Congratulations! You are eligible to enroll for the current academic year.");
+//                 print_info("Proceeding to enrollment...");
+//                 Sleep(2000);
 
-                print_banner("Current Available Majors", COLOR_BLUE);
-                if(printAllMajors(MajorList)){
-                    print_warning("\n» Enter Major ID to enroll in: ");
-                }
-                else{
-                    print_error("No majors available at the moment. Please contact administration.");
-                    print_warning("\nPress Enter to continue...");
-                    getchar();
-                    continue;
-                }
-                char major_id[10];
-                fgets(major_id, sizeof(major_id), stdin);
-                major_id[strcspn(major_id, "\n")] = '\0';
+//                 print_banner("Current Available Majors", COLOR_BLUE);
+//                 if(printAllMajors(MajorList)){
+//                     print_warning("\n» Enter Major ID to enroll in: ");
+//                 }
+//                 else{
+//                     print_error("No majors available at the moment. Please contact administration.");
+//                     print_warning("\nPress Enter to continue...");
+//                     getchar();
+//                     continue;
+//                 }
+//                 char major_id[10];
+//                 fgets(major_id, sizeof(major_id), stdin);
+//                 major_id[strcspn(major_id, "\n")] = '\0';
 
-                char semester[10];
-                print_warning("» Enter Semester (e.g., S1_2024): ");
-                fgets(semester, sizeof(semester), stdin);
-                semester[strcspn(semester, "\n")] = '\0';
-
-                enrollStudent(test, MajorList, student_id, major_id, semester);
-                print_success("Enrollment completed successfully!");
+//                 enrollStudent(univ, MajorList, student_id, major_id);
+//                 print_success("Enrollment completed successfully!");
  
 
-                print_warning("\nPress Enter to continue...");
-                getchar();
-            }
-            else if(student_choice == 3){
-                /******** VIEW COURSES ********/
-                print_banner("Enrolled Courses", COLOR_BLUE);
+//                 print_warning("\nPress Enter to continue...");
+//                 getchar();
+//             }
+//             else if(student_choice == 3){
+//                 /******** VIEW COURSES ********/
+//                 print_banner("Enrolled Courses", COLOR_BLUE);
 
-                Student* student = StudentList -> head;
+//                 Student* student = StudentList -> head;
 
-                while(student != NULL && student -> id != student_id){
-                    student = student -> next; 
-                }
+//                 while(student != NULL && student -> id != student_id){
+//                     student = student -> next; 
+//                 }
 
-                if(student -> major_id == NULL){
-                    print_error("You are not enrolled in any major. Please enroll first.");
-                }
-                else{
-                    print_info("Fetching your enrolled courses...");
-                    Sleep(1000);
-                    print_courses_in_major(MajorList, student -> major_id);
-                }
+//                 if(student -> major_id == NULL){
+//                     print_error("You are not enrolled in any major. Please enroll first.");
+//                 }
+//                 else{
+//                     print_info("Fetching your enrolled courses...");
+//                     Sleep(1000);
+//                     print_courses_in_major(MajorList, student -> major_id);
+//                 }
 
-                print_warning("\nPress Enter to continue...");
-                getchar();
-            }
-            else if(student_choice == 4){
-                /******** VIEW GRADES ********/
-                print_banner("Grades & Results", COLOR_MAGENTA);
+//                 print_warning("\nPress Enter to continue...");
+//                 getchar();
+//             }
+//             else if(student_choice == 4){
+//                 /******** VIEW GRADES ********/
+//                 print_banner("Grades & Results", COLOR_MAGENTA);
 
-                Student* student = StudentList -> head;
+//                 print_info("Enter major ID to view grades for (S1_2025): ");
+//                 char major_id[10];
+//                 fgets(major_id, sizeof(major_id), stdin);
+//                 major_id[strcspn(major_id, "\n")] = '\0';
+//                 Sleep(1000);
 
-                while(student != NULL && student -> id != student_id){
-                    student = student -> next; 
-                }
+//                 print_info("Enter academic year to view grades for (2025-2026): ");
+//                 char academic_year[10];
+//                 fgets(academic_year, sizeof(academic_year), stdin);
+//                 academic_year[strcspn(academic_year, "\n")] = '\0';
+//                 Sleep(1000);
 
-                if(student -> major_id == NULL){
-                    print_error("You are not enrolled in any major. Please enroll first.");
-                }
-                else{
-                    char semester[10];
-                    print_warning("» Enter Semester (e.g., S1_2024) or 'all' for all semesters: ");
-                    fgets(semester, sizeof(semester), stdin);
-                    semester[strcspn(semester, "\n")] = '\0';
-                    Sleep(1000);
-                }
+//                 char semester[10];
+//                 print_warning("» Enter Semester (e.g., S1_2024) or 'all' for all semesters: ");
+//                 fgets(semester, sizeof(semester), stdin);
+//                 semester[strcspn(semester, "\n")] = '\0';
+//                 Sleep(1000);
                 
-                if(!affichage_grade(test, MajorList, student_id, NULL, "all")){
-                    print_error("No grades found for the specified semester.");
-                }
-                else{
-                    print_success("Grades fetched successfully!");
-                }
+                
+//                 if(!affichage_grade(univ, MajorList, student_id, major_id, semester, academic_year)){
+//                     print_error("No grades found for the specified semester.");
+//                 }
+//                 else{
+//                     print_success("Grades fetched successfully!");
+//                 }
 
-                print_warning("\nPress Enter to continue...");
-                getchar();
-            }
-            else if(student_choice == 5){
-                print_info("Logging out...");
-                Sleep(1000);
-                student_exit = 1;
-            }
-        }
-}
+//                 print_warning("\nPress Enter to continue...");
+//                 getchar();
+//             }
+//             else if(student_choice == 5){
+//                 print_info("Logging out...");
+//                 Sleep(1000);
+//                 student_exit = 1;
+//             }
+//         }
+// }
 //////////////////////////////////////// END OF STUDENT PORTAL /////////////////////////////////////
 
         else if(choice == 3){
@@ -751,7 +756,7 @@ int main() {
     // Cleanup and show session summary
     print_info("Closing database connection...");
     Sleep(500);
-    sqlite3_close(test);
+    sqlite3_close(univ);
     
     print_session_summary();
     

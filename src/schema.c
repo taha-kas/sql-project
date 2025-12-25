@@ -79,7 +79,6 @@ void create_tables(sqlite3 *db) {
         return ;
     }
     printf("Table de student_concour crée avec succès !\n");
-    sqlite3_close(db);
 
     // Création de la table grades
     const char *sql5 =
@@ -99,7 +98,6 @@ void create_tables(sqlite3 *db) {
     if (rc != SQLITE_OK) {
         printf("Erreur SQL (create table): %s\n", err_msg);
         sqlite3_free(err_msg);
-        sqlite3_close(db);
     }
 
     printf("Table grades créée avec succès.\n");

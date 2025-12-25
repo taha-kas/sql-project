@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <Windows.h>
 #include "sqlite3.h"
 #include "database.h"
 #include "ui_helpers.h"
@@ -131,7 +132,6 @@ int Insert_student_list(Student_List* list, Student* student) {
     else if(list -> head == NULL){
         list -> head = student;
         list -> num_of_students++;
-        printf("Student with ID %d added successfully.\n", student -> id);
         return 1; 
     }
 
@@ -158,7 +158,7 @@ int Save_student(sqlite3 *db, Student_List* list, Student* student){
         return 0;
     }
 
-    printf("Student with ID %d saved successfully.\n", student -> id);
+    printf("%s\n\nStudent with ID %d saved successfully.\n%s", COLOR_GREEN, student -> id, COLOR_RESET);
 
     return 1;
 }
@@ -373,16 +373,12 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
         // Success!
         imported_count++;
         increment_student_imported();
-        
-        // Show progress for large imports
-        if (line_number % 10 == 0) {
-            printf("%s→Processing line %d...\n%s", COLOR_YELLOW, line_number, COLOR_RESET); //to show the user that progress is being made
-            fflush(stdout);
-        }
     }
     
     fclose(file);
     
+    print_info("Analyzing import results...");
+    Sleep(1000);
     // Print summary
     printf("\n\n");
     printf("╔══════════════════════════════════════════════════════════════╗\n");
@@ -395,12 +391,13 @@ void importFromCSV(sqlite3 *db, Student_List* list, const char* filename) {
            line_number > 0 ? (imported_count * 100.0) / line_number : 0.0);
     printf("╚══════════════════════════════════════════════════════════════╝\n");
     
+    Sleep(1000);
     if (imported_count > 0) {
-        printf("%s%s Import completed successfully!%s\n", COLOR_GREEN, ICON_SUCCESS, COLOR_RESET);
+        print_success("Import completed successfully!");
     } else if (error_count > 0) {
-        printf("%s%s Import failed - all lines had errors%s\n", COLOR_RED, ICON_ERROR, COLOR_RESET);
+        print_error("Import failed - all lines had errors");
     } else {
-        printf("%s%s No data found in file%s\n", COLOR_YELLOW, ICON_WARNING, COLOR_RESET);
+        print_warning("No data found in file");
     }
 }
 
@@ -438,7 +435,10 @@ void printStudent(Student_List* list, int id){
             printf("%sFirst Name: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> first_name);
             printf("%sLast Name: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> last_name);
             printf("%sDate of Birth: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> date_of_birth);
-            printf("%sMajor ID: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> major_id);
+            printf("%sPhone Number: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> phone_number);
+            printf("%sEmail: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> email);
+            printf("%sAddress: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> address);
+            printf("%sMajor ID: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> major_id ? temp -> major_id : "(NULL)");
             printf("%sStatus: %s%s\n", COLOR_GREEN, COLOR_RESET, temp -> status);
             return;
         }
@@ -446,32 +446,46 @@ void printStudent(Student_List* list, int id){
     }
 }
 
-void printStudentList(Student_List* list, Major_List* major_list, char* major_id){
+void printStudentList(Student_List* list, Major_List* major_list, const char* major_id){
 
-    //First, check if major exists
-    Major* major = major_list -> head;
-    while(major != NULL && strcmp(major -> major_id, major_id) != 0){
-        major = major -> next; 
-    }   
+    Major* major = major_list->head;
+    while (major && strcmp(major->major_id, major_id) != 0) {
+        major = major->next;
+    }
 
-    if(major == NULL){
+    if (!major) {
         printf("Major with ID %s not found.\n", major_id);
-        return; 
+        return;
     }
 
-    // Then, print students in that major
-    Student* temp = list -> head; 
+    printf("Number of students in %s: %d\n\n", major_id, major->enrolled_students);
+    printf("____________________________________________________________________________________________________________________________________________________________\n");
+    printf("%-5s%-15s%-15s%-12s%-15s%-25s%-40s%-10s%-10s\n",
+           "ID", "First Name", "Last Name", "Birth Date", "Phone", "Email", "Address", "Major", "Status");
+    printf("____________________________________________________________________________________________________________________________________________________________\n");
 
-    printf("Number of students: %d\n\n", list -> num_of_students);
-    printf("________________________________________________________________\n");
-    printf("%-5s%-15s%-15s%-12s%-10s\n", "ID", "First Name", "Last Name", "DOB", "Status");
-    printf("________________________________________________________________\n");
-    while(temp != NULL && strcmp(temp -> major_id, major_id) == 0){
-        printf("%-5d%-15s%-15s%-12s%-10s\n", temp -> id, temp -> first_name, temp -> last_name, temp -> date_of_birth, temp -> status);
-        temp = temp -> next; 
+    Student* temp = list->head;
+    while (temp) {
+
+        if (temp->major_id && strcmp(temp->major_id, major_id) == 0) {
+            printf("%-5d%-15s%-15s%-12s%-15s%-25s%-40s%-10s%-10s\n",
+                   temp->id,
+                   temp->first_name,
+                   temp->last_name,
+                   temp->date_of_birth,
+                   temp->phone_number ? temp->phone_number : "",
+                   temp->email ? temp->email : "",
+                   temp->address ? temp->address : "",
+                   temp->major_id,
+                   temp->status);
+        }
+
+        temp = temp->next;
     }
-    printf("________________________________________________________________\n");
+
+    printf("____________________________________________________________________________________________________________________________________________________________\n");
 }
+
 
 int removeStudent(sqlite3 *db, Student_List* list, int id){
     Student* temp = list -> head;
@@ -506,7 +520,7 @@ int removeStudent(sqlite3 *db, Student_List* list, int id){
     return 1; 
 }
 
-int updateStudent(sqlite3 *db, Student_List* list, int id){
+int updateStudent(sqlite3 *db, Major_List* major_list ,Student_List* list, int id){
     Student* temp = list -> head; 
 
     while(temp != NULL && temp -> id != id){
@@ -518,15 +532,32 @@ int updateStudent(sqlite3 *db, Student_List* list, int id){
         return 0; 
     }
 
+    printf("===========================================\n");
     printf("Current details:\n");
+    printf("===========================================\n");
+    printf("ID: %d\n", temp -> id);
+    printf("===========================================\n");
     printf("First Name: %s\n", temp -> first_name);
+    printf("===========================================\n");
     printf("Last Name: %s\n", temp -> last_name);
+    printf("===========================================\n");
     printf("Date of Birth: %s\n", temp -> date_of_birth);
+    printf("===========================================\n");
+    printf("Phone Number: %s\n", temp -> phone_number);
+    printf("===========================================\n");
+    printf("Email: %s\n", temp -> email);
+    printf("===========================================\n");
+    printf("Address: %s\n", temp -> address);
+    printf("===========================================\n");
     printf("Major ID: %s\n", temp -> major_id); 
+    printf("===========================================\n");
     printf("Status: %s\n", temp -> status);
+    printf("===========================================\n");
 
-    printf("What fields do you want to update?\n");
+    Sleep(1500);
+    printf("\n\nWhat fields do you want to update?\n");
     printf("[1] First Name\n[2] Last Name\n[3] Date of Birth\n[4] Major ID\n[5] Status\n");
+    printf("Enter choice: ");
 
     char choice[10];
     fgets(choice, sizeof(choice), stdin);
@@ -563,6 +594,48 @@ int updateStudent(sqlite3 *db, Student_List* list, int id){
         new_major_id[strcspn(new_major_id, "\n")] = 0;
         free(temp -> major_id);
         temp -> major_id = strdup(new_major_id);
+
+        //Increment enrolled_students in the new major
+        Major* major = major_list -> head;
+        while(major != NULL && strcmp(major -> major_id, new_major_id) != 0){
+            major = major -> next; 
+        }
+
+        if(major != NULL){
+            major -> enrolled_students++;
+            sqlite3_stmt* stmt;
+            const char* sql = "UPDATE major SET enrolled_students = ? WHERE major_id = ?;";
+            if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+                printf("Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+            } else {
+                sqlite3_bind_int(stmt, 1, major->enrolled_students);
+                sqlite3_bind_text(stmt, 2, major->major_id, -1, SQLITE_STATIC);
+                if (sqlite3_step(stmt) != SQLITE_DONE) {
+                    printf("Failed to update enrolled_students: %s\n", sqlite3_errmsg(db));
+                }
+                sqlite3_finalize(stmt);
+            }
+        }
+
+        else{
+            printf("Warning: Major with ID %s not found. Major ID not updated.\n", new_major_id);
+            free(temp -> major_id);
+            temp -> major_id = strdup("");
+        }
+
+        temp -> status = strdup("active");
+        sqlite3_stmt* stmt1;
+        const char* sql1 = "UPDATE student SET status = ? WHERE id = ?;";
+        if (sqlite3_prepare_v2(db, sql1, -1, &stmt1, NULL) != SQLITE_OK) {
+            printf("Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+        } else {
+            sqlite3_bind_text(stmt1, 1, temp->status, -1, SQLITE_STATIC);
+            sqlite3_bind_int(stmt1, 2, temp->id);
+            if (sqlite3_step(stmt1) != SQLITE_DONE) {
+                printf("Failed to update status: %s\n", sqlite3_errmsg(db));
+            }
+            sqlite3_finalize(stmt1);
+        }
     }
     else if(strcmp(choice, "5") == 0){
         printf("Enter new Status (pending/active/graduated/dropped): ");

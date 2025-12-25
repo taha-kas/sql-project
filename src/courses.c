@@ -120,7 +120,8 @@ void add_course_to_major(sqlite3 *db, Major_List* list, char* major_id, char* co
     if(major -> course_list -> head == NULL){
         major -> course_list -> head = course; 
         major -> course_list -> num_of_courses++;
-        return; 
+        db_insert_major_course(db, major -> major_id, course);
+        return;
     }
     
     Course* temp = major -> course_list -> head; 
@@ -183,17 +184,25 @@ int updateCourse(sqlite3 *db, Course_List* list, char* course_id){
         return 0; 
     }
 
+    printf("===========================================\n");
     printf("Current details:\n");
+    printf("===========================================\n");
     printf("Course ID: %s\n", temp -> course_id);
+    printf("===========================================\n");
     printf("Course Name: %s\n", temp -> course_name);
+    printf("===========================================\n");
     printf("Professor: %s\n", temp -> professor);
+    printf("===========================================\n");
 
-    printf("What fields do you want to update?\n");
+    printf("\n\nWhat fields do you want to update?\n");
 
-    printf("1. Course Name (y/n)\n");
+    printf("[1] Course Name\n[2] Professor\n");
+    printf("Enter choice: ");
     char choice[10];
-    fgets(choice, sizeof(choice), stdin); 
-    if(choice[0] == 'y' || choice[0] == 'Y'){
+    fgets(choice, sizeof(choice), stdin);
+    choice[strcspn(choice, "\n")] = 0;
+
+    if(strcmp(choice, "1") == 0){
         printf("Enter new Course Name: ");
         char course_name[100];
         fgets(course_name, sizeof(course_name), stdin);
@@ -206,10 +215,7 @@ int updateCourse(sqlite3 *db, Course_List* list, char* course_id){
 
         temp -> course_name = strdup(course_name);
     }
-
-    printf("2. Professor (y/n)\n");
-    fgets(choice, sizeof(choice), stdin);
-    if(choice[0] == 'y' || choice[0] == 'Y'){
+    else if(strcmp(choice, "2") == 0){
         printf("Enter new Professor Name: ");
         char professor[100];
         fgets(professor, sizeof(professor), stdin);
@@ -220,6 +226,10 @@ int updateCourse(sqlite3 *db, Course_List* list, char* course_id){
         }
 
         temp -> professor = strdup(professor);
+    }
+    else{
+        printf("Invalid choice.\n");
+        return 0; 
     }
 
     if(!db_update_course(db, temp)){

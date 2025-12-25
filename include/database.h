@@ -18,6 +18,7 @@ typedef struct Major{
     char* major_id; 
     char* major_name;
     Course_List* course_list;
+    int courses_loaded;
     int capacity; 
     int enrolled_students;
     char* head_professor;
@@ -66,10 +67,10 @@ Student* CreateNode();
 Student_List* CreateList();
 int Insert_student_list(Student_List* list, Student* student); 
 int Save_student(sqlite3 *db, Student_List* list, Student* student);
-int updateStudent(sqlite3 *db, Student_List* list, int id);
+int updateStudent(sqlite3 *db, Major_List* major_list, Student_List* list, int id);
 int removeStudent(sqlite3 *db, Student_List* list, int id);
 void printStudent(Student_List* list, int id);
-void printStudentList(Student_List* list, Major_List* major_list, char* major_id);
+void printStudentList(Student_List* list, Major_List* major_list, const char* major_id);
 void freeList(Student_List* list);
 void importFromCSV(sqlite3 *db, Student_List* list, const char* filename);
 void exportToCSV(Student_List* list, const char* filename);
@@ -101,7 +102,6 @@ int removeMajor(sqlite3 *db, Major_List* list, char* major_id);
 int UpdateMajor(sqlite3 *db, Major_List* list, char* major_id);
 int printAllMajors(Major_List* list);
 int printMajor(Major_List* list, char* major_id);
-
 ////////////////////////////////END OF MAJOR FUNCTIONS/////////////////////////////////////
 
 
@@ -130,7 +130,7 @@ void LoadMajors(sqlite3 *db, Major_List* major_list);
 
 void CreateMajorCourseTable(sqlite3* db);
 int db_insert_major_course(sqlite3* db, const char* major_id, Course* c);
-void load_major_courses(sqlite3 *db, Major_List* major_list);
+void load_major_courses(sqlite3 *db, Major_List* major_list, char* major_id);
 ////////////////////////////////END OF DATABASE OPERATION FUNCTIONS/////////////////////////////////////
 
 #endif // DATABASE_H
