@@ -8,6 +8,9 @@ void create_tables(sqlite3 *db) {
 
     const char *sql_sem = "Create table semester("
                           "semester_id text Primary key,"
+                          "academic_year TEXT,"
+                          "start_date DATE,"
+                          "end_date DATE,"
                           "enrollment_deadline date);";  
 
     rc = sqlite3_exec(db,sql_sem,0,0,&err_msg);
@@ -22,10 +25,9 @@ void create_tables(sqlite3 *db) {
                       "enrollment_id integer Primary key AUTOINCREMENT,"  
                       "student_id integer,"
                       "major_id Text,"
-                      "semester_id text,"
-                      "Foreign key (student_id) references student(student_id),"
-                      "Foreign key (major_id) references major(major_id) DELETE CASCADE,"
-                      "FOREIGN KEY (semester_id) REFERENCES semester(semester_id));";
+                      "academic_year TEXT,"
+                      "Foreign key (student_id) references student(id) ON DELETE CASCADE,"
+                      "Foreign key (major_id) references major(major_id) ON DELETE CASCADE);";
 
     rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
     if(rc != SQLITE_OK) {
@@ -39,8 +41,8 @@ void create_tables(sqlite3 *db) {
                        "Major_id Text,"
                        "prerequisite_Major_id Text,"
                        "Primary key (Major_id,prerequisite_Major_id),"
-                       "foreign key(Major_id) references Major(Major_id) DELETE CASCADE,"
-                       "foreign key(prerequisite_Major_id) references Major(Major_id) DELETE CASCADE);";
+                       "foreign key(Major_id) references Major(Major_id) ON DELETE CASCADE,"
+                       "foreign key(prerequisite_Major_id) references Major(Major_id) ON DELETE CASCADE);";
                        
     rc = sqlite3_exec(db, sql1, 0, 0, &err_msg);
     if(rc != SQLITE_OK) {
@@ -70,7 +72,7 @@ void create_tables(sqlite3 *db) {
                        "concours_id text,"
                        "admitted integer,"
                        "PRIMARY KEY (student_id, concours_id),"
-                       "FOREIGN KEY (student_id) REFERENCES student(student_id));";
+                       "FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE);";
 
     rc = sqlite3_exec(db, sql4, 0, 0, &err_msg);
     if(rc != SQLITE_OK) {
@@ -86,12 +88,13 @@ void create_tables(sqlite3 *db) {
         "grade_id INTEGER PRIMARY KEY AUTOINCREMENT,"
         "student_id INTEGER NOT NULL,"
         "course_id text NOT NULL,"
-        "semester TEXT NOT NULL,"
+        "semester TEXT ,"
+        "academic_year TEXT NOT NULL,"
         "CC1 REAL NOT NULL,"
         "CC2 REAL NOT NULL,"
         "NOTE REAL NOT NULL,"
-        "FOREIGN KEY (student_id) REFERENCES student(student_id),"
-        "FOREIGN KEY (course_id) REFERENCES courses(course_id)"
+        "FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE,"
+        "FOREIGN KEY (course_id) REFERENCES course(course_id) ON DELETE CASCADE"
         ");";
     
     rc = sqlite3_exec(db, sql5, 0, 0, &err_msg);
@@ -100,7 +103,7 @@ void create_tables(sqlite3 *db) {
         sqlite3_free(err_msg);
     }
 
-    printf("Table grades créée avec succès.\n");
+    printf("Table grade créée avec succès.\n");
 
     return ;
 

@@ -5,13 +5,13 @@
 #include "condition.h"
 
 
-//fct +
+//fct + si cette fonction n'est pas utilisé l'ignorer dans le rapport
 int StudentExistsInDB(sqlite3 *db, int student_id){
 
     int rc;
     sqlite3_stmt *stmt;
 
-    const char *sql = "SELECT 1 FROM student WHERE id = ?;";
+    const char *sql = "SELECT * FROM student WHERE id = ?;";
     
     rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
@@ -31,9 +31,15 @@ int StudentExistsInDB(sqlite3 *db, int student_id){
     }
 }
 
+// "2024-2025" -> "2023-2024"
+void previousAcademicYear(char *current, char *previous) {
+    int y1, y2;
+    sscanf(current, "%d-%d", &y1, &y2);
+    sprintf(previous, "%d-%d", y1 - 1, y2 - 1);
+}
 
 
-int vérifierPre(sqlite3 *db,Major_List *major_list, int student_id,char *major_id,char *semester){
+int vérifierPre(sqlite3 *db,Major_List *major_list, int student_id,char *major_id,char *previous_academic_year){
 
     int rc;
     sqlite3_stmt *stmt;
@@ -73,16 +79,18 @@ int vérifierPre(sqlite3 *db,Major_List *major_list, int student_id,char *major_
     while (element!=NULL){
         course_id = element->course_id;
 
-        const unsigned char *sql_grade = "select NOTE from grade where student_id = ? and course_id = ? and semester_id = ?;";
+        const unsigned char *sql_grade = "select NOTE from grade where student_id = ? and course_id = ? and academic_year = ?;";
 
         rc = sqlite3_prepare_v2(db,sql_grade,-1,&stmt,NULL);
+
         if (rc != SQLITE_OK) {
         printf("Erreur prepare grades : %s\n", sqlite3_errmsg(db));
         return 0;
         }
+
         sqlite3_bind_int(stmt,1,student_id);
-        sqlite3_bind_text(stmt,2,course_id,-1,SQLITE_STATIC);
-        sqlite3_bind_text(stmt,3,semester,-1,SQLITE_STATIC);
+        sqlite3_bind_text(stmt,2,course_id,-1,SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt,3,previous_academic_year,-1,SQLITE_TRANSIENT);
         
         rc = sqlite3_step(stmt);
         if (rc != SQLITE_ROW) {
@@ -120,18 +128,50 @@ int vérifierPre(sqlite3 *db,Major_List *major_list, int student_id,char *major_
     }
 
 
-int enrollStudent(sqlite3 *db,Major_List *major_list, int student_id, char *major_id, char *semester){
+int enrollStudent(sqlite3 *db,Major_List *major_list, int student_id, char *major_id){
 
     int rc;
     int état;
 
     sqlite3_stmt *stmt;
 
+
+     //savoir l'année scolaire precedent et actuelle
+    char current_academic_year[10];  // ex: "2024-2025"
+
+    const char *sql_year =
+        "SELECT academic_year "
+        "FROM semester "
+        "WHERE DATE('now') BETWEEN start_date AND end_date "
+        "LIMIT 1;";
+
+    rc = sqlite3_prepare_v2(db, sql_year, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        printf("Erreur prepare semester : %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        const unsigned char *tmp = sqlite3_column_text(stmt, 0);
+        strcpy(current_academic_year, (const char *)tmp);
+    } else {
+        printf("Aucune année scolaire active trouvée\n");
+        sqlite3_finalize(stmt);
+        return 1;
+    }
+
+    sqlite3_finalize(stmt);
+
+    char previous_academic_year[10];
+
+    previousAcademicYear(current_academic_year, previous_academic_year);
+
     // --- Vérifier si l'étudiant est interne ou externe ---
     // 0 = interne et 1 = externe
 
     
-    const char *sql = "SELECT 1 FROM student WHERE student_id = ?;";
+    const char *sql = "SELECT 1 FROM student WHERE id = ?;";
     
     rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
@@ -174,7 +214,7 @@ int enrollStudent(sqlite3 *db,Major_List *major_list, int student_id, char *majo
     
     //---- Verifier que étudiant n'est pas déjà inscris
 
-    rc = sqlite3_prepare_v2(db,"select * from enrollment where student_id = ?;",-1,&stmt,NULL);
+    rc = sqlite3_prepare_v2(db,"select * from enrollment where student_id = ? AND academic_year = ?;",-1,&stmt,NULL);
 
     if (rc != SQLITE_OK) {
         printf("Erreur prepare enrollment : %s\n", sqlite3_errmsg(db));
@@ -182,6 +222,7 @@ int enrollStudent(sqlite3 *db,Major_List *major_list, int student_id, char *majo
     }
 
     sqlite3_bind_int(stmt, 1,student_id);
+    sqlite3_bind_text(stmt,2,current_academic_year,-1,SQLITE_TRANSIENT);
 
     rc = sqlite3_step(stmt);
     if (rc == SQLITE_ROW) {
@@ -223,11 +264,12 @@ int enrollStudent(sqlite3 *db,Major_List *major_list, int student_id, char *majo
     sqlite3_finalize(stmt);
 
 
+
     //------- Vérifier prérequis  --------
 
     if (état == 0) //interne
     {
-        if(!vérifierPre(db,major_list,student_id,major_id,semester)){
+        if(!vérifierPre(db,major_list,student_id,major_id,previous_academic_year)){
             printf("Major prerequisite non validé");
             return 1;
         }
@@ -329,10 +371,10 @@ int enrollStudent(sqlite3 *db,Major_List *major_list, int student_id, char *majo
 
     // ------- Vérification de semester if enrollment is late
     
-    const char *sql_late = "SELECT DATE('now') > enrollment_deadline FROM semester WHERE semester_id = ?;";
+    const char *sql_late = "SELECT DATE('now') > enrollment_deadline FROM semester WHERE academic_year = ?;";
 
     sqlite3_prepare_v2(db, sql_late, -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1,semester,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1,current_academic_year,-1,SQLITE_TRANSIENT);
     sqlite3_step(stmt);
 
     int isLate = sqlite3_column_int(stmt, 0);
@@ -348,7 +390,7 @@ int enrollStudent(sqlite3 *db,Major_List *major_list, int student_id, char *majo
     //------- Vérification si on a établit les 5 conditions --------
     
     
-    rc = sqlite3_prepare_v2(db,"insert into enrollment (student_id, major_id, semester) Values (?,?,?);",-1,&stmt,NULL);
+    rc = sqlite3_prepare_v2(db,"insert into enrollment (student_id, major_id, academic_year) Values (?,?,?);",-1,&stmt,NULL);
     if (rc != SQLITE_OK) {
     printf("Erreur prepare enrollment : %s\n", sqlite3_errmsg(db));
     return 1;
@@ -356,7 +398,7 @@ int enrollStudent(sqlite3 *db,Major_List *major_list, int student_id, char *majo
 
     sqlite3_bind_int(stmt,1,student_id);
     sqlite3_bind_text(stmt,2,major_id,-1,SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt,3,semester,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt,3,current_academic_year,-1,SQLITE_TRANSIENT);
     sqlite3_step(stmt); 
     sqlite3_reset(stmt);
 
@@ -386,20 +428,22 @@ int enrollStudent(sqlite3 *db,Major_List *major_list, int student_id, char *majo
     
 }
 
-int unenrollStduent(sqlite3 *db, int student_id, char *major_id){
+int unenrollStduent(sqlite3 *db, int student_id, char *major_id,char *academic_year){
 
     int rc;
     sqlite3_stmt *stmt;
 
     // ---- Vérifier si l'étudiant existe dans la table student ----
-    rc = sqlite3_prepare_v2(db,"SELECT 1 FROM student WHERE student_id = ?;",-1, &stmt, NULL);
+    rc = sqlite3_prepare_v2(db,"SELECT 1 FROM enrollment WHERE student_id = ? and major_id = ? and academic_year = ?;",-1, &stmt, NULL);
 
     if (rc != SQLITE_OK) {
-        printf("Erreur prepare student : %s\n", sqlite3_errmsg(db));
+        printf("Erreur prepare enrollment : %s\n", sqlite3_errmsg(db));
         return 1;
     }
 
     sqlite3_bind_int(stmt, 1, student_id);
+    sqlite3_bind_text(stmt,2,major_id,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt,3,academic_year,-1,SQLITE_TRANSIENT);
 
     rc = sqlite3_step(stmt);
 
@@ -414,7 +458,7 @@ int unenrollStduent(sqlite3 *db, int student_id, char *major_id){
 
     // ---- Supprimer l'inscription ----
 
-    rc = sqlite3_prepare_v2(db,"DELETE FROM enrollment WHERE student_id = ? AND major_id = ?;",-1, &stmt, NULL);
+    rc = sqlite3_prepare_v2(db,"DELETE FROM enrollment WHERE student_id = ? AND major_id = ? and academic_year = ?;",-1, &stmt, NULL);
 
     if (rc != SQLITE_OK) {
         printf("Erreur prepare delete : %s\n", sqlite3_errmsg(db));
@@ -423,6 +467,7 @@ int unenrollStduent(sqlite3 *db, int student_id, char *major_id){
 
     sqlite3_bind_int(stmt, 1, student_id);
     sqlite3_bind_text(stmt, 2, major_id,-1,SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, academic_year,-1,SQLITE_TRANSIENT);
 
     rc = sqlite3_step(stmt);
 

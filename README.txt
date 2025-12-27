@@ -1,0 +1,3 @@
+Note pour le professeur:
+* Le building et running du programme s'effectue en utilisant el shortcut CTRL + SHIFT + B, veuillez consulter le fichier tasks.json dans le dossier .vscode pour plus d'informations.
+* La section administrateur est entièrement fonctionnelle : toutes les fonctionnalités ont été testées avec succès et répondent aux spécifications attendues. En revanche, la section étudiant rencontre encore quelques problèmes fonctionnels, bien qu’aucune erreur de compilation ne soit présente. Certaines interactions peuvent ne pas se comporter comme prévu dans des cas d’usage précis. Nous travaillons actuellement à les corriger.

@@ -5,11 +5,11 @@
 #include "course_list.h"
 #include "database.h"
 
-int verifier_etud_existe(sqlite3 *db, int student_id, char *course_id, char *semester){
+int verifier_etud_existe(sqlite3 *db, int student_id, char *course_id, char *semester,char * academic_year){
     
     int rc;
     sqlite3_stmt *stmt;
-    const char *sql = "SELECT 1 FROM grade WHERE student_id = ? and course_id = ? and semester_ = ?;";
+    const char *sql = "SELECT 1 FROM grade WHERE student_id = ? and course_id = ? and semester = ? and academic_year = ?;";
 
     rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
@@ -20,6 +20,7 @@ int verifier_etud_existe(sqlite3 *db, int student_id, char *course_id, char *sem
     sqlite3_bind_int(stmt, 1, student_id);
     sqlite3_bind_text(stmt,2,course_id,-1,SQLITE_STATIC);
     sqlite3_bind_text(stmt,3,semester,-1,SQLITE_STATIC);
+    sqlite3_bind_text(stmt,4,academic_year,-1,SQLITE_STATIC);
 
     rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -28,7 +29,7 @@ int verifier_etud_existe(sqlite3 *db, int student_id, char *course_id, char *sem
 }
 
 
-int insert_into_grade_table(sqlite3 *db, int student_id, char *course_id, char *semester){
+int insert_into_grade_table(sqlite3 *db, int student_id, char *course_id, char *semester,char* academic_year){
     int rc;
     sqlite3_stmt *stmt;
     // --- Vérifier si l'étudiant existe ---
@@ -65,43 +66,47 @@ int insert_into_grade_table(sqlite3 *db, int student_id, char *course_id, char *
     sqlite3_finalize(stmt);
     if (rc == SQLITE_DONE) {
         printf("Course n'existe pas\n");
-        sqlite3_finalize(stmt);
         return 1;
     }
 
     // verifier si elle est deja dans base de donnes
     
-    if(verifier_etud_existe(db,student_id,course_id,semester)){
+    if(verifier_etud_existe(db,student_id,course_id,semester,academic_year)){
         return 1;
     }
 
     // ajouter si elle n'est pas dans base de données
 
-    const char *sql_aj = "insert into grade(student_id,course_id,semester, CC1, CC2, NOTE) values (?,?,?,0,0,0);";
+    const char *sql_aj = "insert into grade(student_id,course_id,semester,academic_year,CC1, CC2, NOTE) values (?,?,?,?,0,0,0);";
         sqlite3_prepare_v2(db,sql_aj,-1,&stmt,NULL);
 
         sqlite3_bind_int(stmt,1,student_id);
         sqlite3_bind_text(stmt,2,course_id,-1,SQLITE_STATIC);
         sqlite3_bind_text(stmt,3,semester,-1,SQLITE_STATIC);
+        sqlite3_bind_text(stmt,4,academic_year,-1,SQLITE_STATIC);
 
         sqlite3_step(stmt); 
 
         sqlite3_finalize(stmt);
         printf("Etudiant ajouter dans base de données");
+        return 0;
 }
 
 
 
-int addGrade(sqlite3 *db, int student_id, char* course_id, char *semester,float CC1, float CC2){
+int addGrade(sqlite3 *db, int student_id, char* course_id, char *semester,char * academic_year,float CC1, float CC2){
 
     int rc;
     sqlite3_stmt *stmt;
 
     float NOTE = CC1 * 0.3f + CC2 * 0.7f;
-    insert_into_grade_table(db,student_id,course_id,semester);
+    if (insert_into_grade_table(db,student_id,course_id,semester,academic_year) != 0) {
+    return 1;
+    }
 
 
-    const char *sql = "UPDATE grade SET CC1 = ?, CC2 = ?, NOTE = ? WHERE student_id = ? AND course_id = ? AND semester = ?;";
+
+    const char *sql = "UPDATE grade SET CC1 = ?, CC2 = ?, NOTE = ? WHERE student_id = ? AND course_id = ? AND semester = ? AND academic_year=?;";
     sqlite3_prepare_v2(db,sql,-1,&stmt,NULL);
 
     sqlite3_bind_double(stmt,1,CC1);
@@ -110,6 +115,7 @@ int addGrade(sqlite3 *db, int student_id, char* course_id, char *semester,float 
     sqlite3_bind_int(stmt,4,student_id);
     sqlite3_bind_text(stmt,5,course_id,-1,SQLITE_STATIC);
     sqlite3_bind_text(stmt,6,semester,-1,SQLITE_STATIC);
+    sqlite3_bind_text(stmt,7,academic_year,-1,SQLITE_STATIC);
 
     sqlite3_step(stmt); 
     sqlite3_finalize(stmt);
@@ -118,14 +124,14 @@ int addGrade(sqlite3 *db, int student_id, char* course_id, char *semester,float 
     
 }
 
-int updateGrade(sqlite3 *db, int student_id, char* course_id, char *semester, float new_CC1, float new_CC2) {
+int updateGrade(sqlite3 *db, int student_id, char* course_id, char *semester,char* academic_year, float new_CC1, float new_CC2) {
     sqlite3_stmt *stmt;
     int rc;
 
     float new_NOTE = new_CC1 * 0.3f + new_CC2 * 0.7f;
 
     // Vérifier si la ligne existe
-    if (!verifier_etud_existe(db, student_id, course_id, semester)) {
+    if (!verifier_etud_existe(db, student_id, course_id, semester,academic_year)) {
         printf("Erreur : l'étudiant n'est pas inscrit à ce cours pour ce semestre.\n");
         return 1;
     }
@@ -134,7 +140,7 @@ int updateGrade(sqlite3 *db, int student_id, char* course_id, char *semester, fl
     const char *sql_update =
         "UPDATE grade "
         "SET CC1 = ?, CC2 = ?, NOTE = ? "
-        "WHERE student_id01 = ? AND course_id01 = ? AND semester = ?;";
+        "WHERE student_id = ? AND course_id = ? AND semester = ? AND academic_year = ? ;";
 
     rc = sqlite3_prepare_v2(db, sql_update, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
@@ -148,6 +154,7 @@ int updateGrade(sqlite3 *db, int student_id, char* course_id, char *semester, fl
     sqlite3_bind_int(stmt, 4, student_id);
     sqlite3_bind_text(stmt, 5, course_id, -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 6, semester, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 7, academic_year, -1, SQLITE_STATIC);
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
@@ -162,7 +169,7 @@ int updateGrade(sqlite3 *db, int student_id, char* course_id, char *semester, fl
 }
 
 
-int affichage_grade(sqlite3 *db,Major_List *major_list, int student_id,char *major_id,char *semester){
+int affichage_grade(sqlite3 *db,Major_List *major_list, int student_id,char *major_id,char *semester,char *academic_year){
     int rc;
     sqlite3_stmt *stmt2;
     const char *course_id;
@@ -184,7 +191,7 @@ int affichage_grade(sqlite3 *db,Major_List *major_list, int student_id,char *maj
     
     while (element!=NULL){
         course_id=element->course_id;
-        const unsigned char *sql_grade = "select NOTE from grade where student_id = ? and course_id = ? and semester = ?;";
+        const unsigned char *sql_grade = "select NOTE from grade where student_id = ? and course_id = ? and academic_year = ?;";
 
         rc = sqlite3_prepare_v2(db,sql_grade,-1,&stmt2,NULL);
         if (rc != SQLITE_OK) {
@@ -194,7 +201,7 @@ int affichage_grade(sqlite3 *db,Major_List *major_list, int student_id,char *maj
 
         sqlite3_bind_int(stmt2,1,student_id);
         sqlite3_bind_text(stmt2,2,course_id,-1,SQLITE_STATIC);
-        sqlite3_bind_text(stmt2,3,semester,-1,SQLITE_STATIC);
+        sqlite3_bind_text(stmt2,3,academic_year,-1,SQLITE_STATIC);
         
         if (sqlite3_step(stmt2) == SQLITE_ROW) {
             grade = sqlite3_column_double(stmt2, 0);
